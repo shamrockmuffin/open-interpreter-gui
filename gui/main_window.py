@@ -76,3 +76,6 @@ class MainWindow(QMainWindow):
     def create_status_bar(self):
         status_bar = QStatusBar()
        
+    def open_settings(self):
+        settings_dialog = SettingsDialog(self)
+        settings_dialog.exec()
