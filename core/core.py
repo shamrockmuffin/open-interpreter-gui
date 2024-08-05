@@ -111,6 +111,7 @@ class OpenInterpreter:
         # OS control mode related attributes
         self.os = os
         self.speak_messages = speak_messages
+        self.workspace_path = self.workspace_manager.get_workspace_path()
         self.workspace_manager = WorkspaceManager(self)
         self.workspace_path = self.workspace_manager.get_workspace_path()
         # Computer
