@@ -73,6 +73,10 @@ class MainWindow(QMainWindow):
         toggle_workspace_action.triggered.connect(self.toggle_workspace)
         view_menu.addAction(toggle_workspace_action)
 
+    def open_settings(self):
+        settings_dialog = SettingsDialog(self)
+        settings_dialog.exec()
+
     def create_status_bar(self):
         status_bar = QStatusBar()
        
