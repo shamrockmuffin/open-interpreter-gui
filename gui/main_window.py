@@ -76,6 +76,10 @@ class MainWindow(QMainWindow):
     def create_status_bar(self):
         status_bar = QStatusBar()
        
-    def open_settings(self):
+    def toggle_workspace(self):
+        if self.workspace_manager.isVisible():
+            self.workspace_manager.hide()
+        else:
+            self.workspace_manager.show()
         settings_dialog = SettingsDialog(self)
         settings_dialog.exec()
