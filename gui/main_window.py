@@ -61,7 +61,7 @@ class MainWindow(QMainWindow):
         self.chat_stack = QStackedWidget()
         center_layout.addWidget(self.chat_stack)
         
-        self.script_display = QTextEdit()  # Temporary replacement for ScriptDisplayWidget
+        self.script_display = QTextEdit()
         self.script_display.setReadOnly(True)
         center_layout.addWidget(self.script_display)
 
@@ -81,6 +81,10 @@ class MainWindow(QMainWindow):
         main_layout.addWidget(right_panel, 1)
 
         self.setCentralWidget(main_widget)
+
+        # Create UI Manager
+        self.ui_manager = UIManager()
+        center_layout.addWidget(self.ui_manager)
 
     def create_new_chat(self):
         new_chat = ChatWidget(self.interpreter)

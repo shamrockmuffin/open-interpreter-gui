@@ -146,24 +146,31 @@ class ChatWidget(QWidget):
 
     def process_message(self, message):
         try:
-
-
-
             if self.file_list_widget:
                 for file_name, file_path in self.file_list_widget.get_uploaded_files().items():
                     if file_name in message:
                         message = message.replace(file_name, file_path)
 
-
             self.interpreter_thread = InterpreterThread(self.interpreter, message)
             self.interpreter_thread.output_received.connect(self.handle_interpreter_output)
+            self.interpreter_thread.processing_started.connect(self.on_processing_started)
+            self.interpreter_thread.processing_finished.connect(self.on_processing_finished)
             self.interpreter_thread.start()
 
             logger.info(f"Processing message: {message}")
         except Exception as e:
             logger.error(f"Error processing message: {str(e)}")
-
             self.append_message("System", "An error occurred while processing your message.")
+
+    def on_processing_started(self):
+        self.send_button.setEnabled(False)
+        self.input_field.setEnabled(False)
+        self.append_message("System", "Processing your request...")
+
+    def on_processing_finished(self):
+        self.send_button.setEnabled(True)
+        self.input_field.setEnabled(True)
+        self.append_message("System", "Processing completed.")
 
 
 
