@@ -135,6 +135,8 @@ class MainWindow(QMainWindow):
         file_path, file_name = self.file_list_widget.upload_file()
         if file_path and file_name:
             self.handle_file_upload(file_path, file_name)
+        else:
+            print("No file was selected for upload.")
 
     def handle_file_operation(self, operation, filename, content):
         self.script_display.setText(f"{operation} - {filename}:\n{content}\n")

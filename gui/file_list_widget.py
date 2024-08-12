@@ -48,6 +48,8 @@ class FileListWidget(QWidget):
             file_name = os.path.basename(file_path)
             self.add_file_to_list(file_path)
             self.file_uploaded.emit(file_path, file_name)
+            return file_path, file_name
+        return None, None
     def download_file(self):
         selected_items = self.file_list.selectedItems()
         if not selected_items:
