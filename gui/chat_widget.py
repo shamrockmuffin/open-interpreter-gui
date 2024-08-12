@@ -73,13 +73,6 @@ class ChatWidget(QWidget):
             self.process_message(message)
 
     def update_chat(self, response):
-        if response['type'] == MessageTypes.MESSAGE and 'content' in response:
-            self.append_message(response['role'], response['content'])
-        elif response['type'] == MessageTypes.CODE and 'content' in response:
-            self.append_code(response['content'], response.get('language', 'python'))
-        elif response['type'] == MessageTypes.CONSOLE and 'content' in response:
-            self.append_console_output(response['content'])
-        
         self.handle_interpreter_output(response)
 
 
