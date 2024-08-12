@@ -125,7 +125,8 @@ class MainWindow(QMainWindow):
         if 0 <= index < self.chat_stack.count():
             self.chat_stack.setCurrentIndex(index)
 
-    def handle_file_upload(self, file_path, file_name):
+    def upload_file(self):
+        self.file_list_widget.upload_file()
         current_chat = self.chat_stack.currentWidget()
         if current_chat:
             current_chat.handle_file_upload(file_path, file_name)
@@ -172,7 +173,7 @@ class MainWindow(QMainWindow):
         
         upload_action = QAction(QIcon(), "Upload File", self)
         upload_action.setShortcut("Ctrl+U")
-        upload_action.triggered.connect(self.file_list_widget.upload_file)
+        upload_action.triggered.connect(self.upload_file)
         file_menu.addAction(upload_action)
 
         file_menu.addSeparator()
@@ -191,7 +192,7 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         if self.chat_stack:
             self.save_chat_history()
-        event.accept()
+        super().closeEvent(event)
 
     def save_chat_history(self):
         if self.chat_stack:
