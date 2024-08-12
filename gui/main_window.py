@@ -1,174 +1,74 @@
 import os
 from datetime import datetime
-from PyQt6.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, 
-                             QMenuBar, QStatusBar, QSplitter, QMessageBox, 
-                             QListWidget, QStackedWidget, QPushButton, QComboBox, QTextEdit)
+from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QMenuBar, QStatusBar, QSplitter
 from PyQt6.QtGui import QAction, QIcon
-from PyQt6.QtCore import Qt, pyqtSlot
-from gui.chat_widget import ChatWidget
-from gui.file_list_widget import FileListWidget
-from gui.settings_dialog import SettingsDialog
-from gui.file_display_widget import FileDisplayWidget
-# from gui.script_display_widget import ScriptDisplayWidget
-from gui.config_manager import ConfigManager
-from gui.message_handler import MessageHandler
-from gui.ui_manager import UIManager
+from PyQt6.QtCore import Qt
+from .chat_widget import ChatWidget
+from .file_list_widget import FileListWidget
+from .settings_dialog import SettingsDialog
+from .file_display_widget import FileDisplayWidget
+from .script_display_widget import ScriptDisplayWidget
 
 class MainWindow(QMainWindow):
-    def __init__(self, interpreter):
+    def __init__(self, interpreter, config_manager):
         super().__init__()
         self.interpreter = interpreter
+        self.config_manager = config_manager
         self.setWindowTitle("Open Interpreter")
         self.setGeometry(100, 100, 1200, 800)
 
-        self.chat_widgets = []
+        self.chat_widget = None
         self.file_list_widget = None
-        self.file_display = FileDisplayWidget()
-        self.layout().addWidget(self.file_display)
+        self.file_display = None
         self.script_display = None
-        self.config_manager = ConfigManager()
-        self.message_handler = MessageHandler(self.interpreter)
 
-        self.ui_manager = UIManager()
-        self.chat_widget = ChatWidget(self.interpreter, self.message_handler, self.file_upload_handler, self.ui_manager)
         self.init_ui()
-        self.connect_components()
         self.create_menu_bar()
         self.create_status_bar()
         self.connect_components()
-
-    def connect_components(self):
-        self.file_list_widget.file_uploaded.connect(self.handle_file_upload)
-        self.file_list_widget.file_selected.connect(self.display_file)
-        self.chat_list.currentRowChanged.connect(self.switch_chat)
-        self.load_settings()
 
     def init_ui(self):
         main_widget = QWidget()
         main_layout = QHBoxLayout(main_widget)
 
-        # Left panel: Model selection and chat list
-        left_panel = QWidget()
-        left_layout = QVBoxLayout(left_panel)
-        
-        self.model_selector = QComboBox()
-        self.model_selector.addItems(self.config_manager.load_config()['available_models'])
-        self.model_selector.setCurrentText(self.config_manager.load_config()['default_model'])
-        self.model_selector.currentTextChanged.connect(self.on_model_changed)
-        left_layout.addWidget(self.model_selector)
-        
-        self.chat_list = QListWidget()
-        left_layout.addWidget(self.chat_list)
-        
-        new_chat_button = QPushButton("New Chat")
-        new_chat_button.clicked.connect(self.create_new_chat)
-        left_layout.addWidget(new_chat_button)
+        # Create a splitter for resizable panels
+        splitter = QSplitter(Qt.Orientation.Horizontal)
 
-        # Center panel: Chat widget, input area, and code output
-        center_panel = QWidget()
-        center_layout = QVBoxLayout(center_panel)
-        
-        self.chat_stack = QStackedWidget()
-        center_layout.addWidget(self.chat_stack)
-        
-        # Chat input area
-        chat_input_layout = QHBoxLayout()
-        self.chat_input = QTextEdit()
-        self.chat_input.setFixedHeight(50)
-        self.send_button = QPushButton("Send")
-        self.send_button.clicked.connect(self.send_message)
-        chat_input_layout.addWidget(self.chat_input)
-        chat_input_layout.addWidget(self.send_button)
-        center_layout.addLayout(chat_input_layout)
-        
-        self.script_display = QTextEdit()
-        self.script_display.setReadOnly(True)
-        center_layout.addWidget(self.script_display)
+        # Left panel: Chat widget
+        self.chat_widget = ChatWidget(self.interpreter)
+        splitter.addWidget(self.chat_widget)
 
-        # Right panel: File list and file display
+        # Right panel: File list, File display, and Script display
         right_panel = QWidget()
         right_layout = QVBoxLayout(right_panel)
         
-        self.file_list_widget = FileListWidget(self.interpreter, self.chat_widgets)
-        right_layout.addWidget(self.file_list_widget)
-        
+        top_right_splitter = QSplitter(Qt.Orientation.Vertical)
+        self.file_list_widget = FileListWidget(self.interpreter, self.chat_widget)
         self.file_display = FileDisplayWidget()
-        right_layout.addWidget(self.file_display)
+        top_right_splitter.addWidget(self.file_list_widget)
+        top_right_splitter.addWidget(self.file_display)
+        
+        self.script_display = ScriptDisplayWidget()
+        
+        right_layout.addWidget(top_right_splitter, 2)
+        right_layout.addWidget(self.script_display, 1)
+        
+        right_panel.setLayout(right_layout)
+        splitter.addWidget(right_panel)
 
-        # Add panels to main layout
-        main_layout.addWidget(left_panel, 1)
-        main_layout.addWidget(center_panel, 2)
-        main_layout.addWidget(right_panel, 1)
+        splitter.setStretchFactor(0, 1)
+        splitter.setStretchFactor(1, 1)
 
+        main_layout.addWidget(splitter)
         self.setCentralWidget(main_widget)
 
-        # Create UI Manager
-        self.ui_manager = UIManager()
-        center_layout.addWidget(self.ui_manager)
+    def connect_components(self):
+        self.chat_widget.set_file_list_widget(self.file_list_widget)
+        self.chat_widget.set_main_window(self)
+        self.file_list_widget.file_uploaded.connect(self.chat_widget.handle_file_upload)
+        self.file_list_widget.file_selected.connect(self.display_file)
+        self.chat_widget.file_operation_occurred.connect(self.script_display.display_file_operation)
 
-    def create_new_chat(self):
-        new_chat = ChatWidget(self.interpreter, self.message_handler, self.file_list_widget, self.ui_manager)
-        self.chat_widgets.append(new_chat)
-        self.chat_stack.addWidget(new_chat)
-        self.chat_stack.setCurrentWidget(new_chat)
-        
-        chat_item = f"Chat {len(self.chat_widgets)}"
-        self.chat_list.addItem(chat_item)
-        self.chat_list.setCurrentRow(self.chat_list.count() - 1)
-        
-        new_chat.set_file_list_widget(self.file_list_widget)
-        new_chat.set_main_window(self)
-        new_chat.file_operation_occurred.connect(self.script_display.display_file_operation)
-        new_chat.message_sent.connect(self.process_message)
-
-    def on_model_changed(self, model):
-        config = self.config_manager.load_config()
-        config['default_model'] = model
-        self.config_manager.save_config(config)
-        self.interpreter.llm.model = model
-
-    def handle_file_upload(self, file_path, file_name):
-        current_chat = self.chat_stack.currentWidget()
-        if current_chat:
-            current_chat.handle_file_upload(file_path, file_name)
-
-    @pyqtSlot(str)
-    def process_message(self, message):
-        current_chat = self.chat_stack.currentWidget()
-        try:
-            for response in self.message_handler.process_message(message):
-                current_chat.update_chat(response)
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
-
-    def switch_chat(self, index):
-        if 0 <= index < self.chat_stack.count():
-            self.chat_stack.setCurrentIndex(index)
-
-    def upload_file(self):
-        file_path, file_name = self.file_list_widget.upload_file()
-        if file_path and file_name:
-            self.handle_file_upload(file_path, file_name)
-        else:
-            print("No file was selected for upload.")
-
-    def handle_file_operation(self, operation, filename, content):
-        self.script_display.setText(f"{operation} - {filename}:\n{content}\n")
-        self.file_list_widget.refresh_file_list()
-        language = self.detect_language(filename)
-        self.update_status_bar({"file_path": filename, "language": language})
-
-    def detect_language(self, filename):
-        extension = filename.split('.')[-1].lower()
-        language_map = {
-            'py': 'Python',
-            'js': 'JavaScript',
-            'html': 'HTML',
-            'css': 'CSS',
-            'json': 'JSON',
-            'txt': 'Plain Text'
-        }
-        return language_map.get(extension, 'Unknown')
     def display_file(self, file_path):
         self.file_display.clear()
         file_extension = file_path.split('.')[-1].lower()
@@ -194,7 +94,7 @@ class MainWindow(QMainWindow):
         
         upload_action = QAction(QIcon(), "Upload File", self)
         upload_action.setShortcut("Ctrl+U")
-        upload_action.triggered.connect(self.upload_file)
+        upload_action.triggered.connect(self.file_list_widget.upload_file)
         file_menu.addAction(upload_action)
 
         file_menu.addSeparator()
@@ -211,16 +111,13 @@ class MainWindow(QMainWindow):
         edit_menu.addAction(settings_action)
 
     def closeEvent(self, event):
-        if self.chat_stack:
-            self.save_chat_history()
-        super().closeEvent(event)
+        self.save_chat_history()
+        event.accept()
 
     def save_chat_history(self):
-        if self.chat_stack:
-            current_chat = self.chat_stack.currentWidget()
-            chat_history = current_chat.chat_display.toPlainText()
-            if not chat_history.strip():
-                return
+        chat_history = self.chat_widget.chat_display.toPlainText()
+        if not chat_history.strip():
+            return
 
         if not os.path.exists("GUI_chat_history"):
             os.makedirs("GUI_chat_history")
@@ -233,36 +130,12 @@ class MainWindow(QMainWindow):
 
     def open_settings(self):
         settings_dialog = SettingsDialog(self.interpreter, self.config_manager)
-        if settings_dialog.exec():
-            self.apply_settings()
-
-    def apply_settings(self):
-        config = self.config_manager.load_config()
-        self.interpreter.llm.model = config.get('model', 'gpt-4o')
-        self.interpreter.llm.context_length = config.get('context_window', 25000)
-        self.interpreter.llm.temperature = config.get('temperature', 0.7)
-        self.interpreter.api_base = config.get('api_base', 'https://openrouter.ai/api/v1')
-
-    def load_settings(self):
-        self.apply_settings()
-
-    def send_message(self):
-        message = self.chat_input.toPlainText()
-        if message:
-            current_chat = self.chat_stack.currentWidget()
-            if current_chat:
-                current_chat.append_message("User", message)
-                self.chat_input.clear()
-                self.process_message(message)
-
-    def handle_file_operation(self, operation, filename, content):
-        self.script_display.display_file_operation(operation, filename, content)
-        self.file_list_widget.refresh_file_list()
+        settings_dialog.exec()
 
     def create_status_bar(self):
         self.statusBar().showMessage("Ready")
 
     def update_status_bar(self, content_info):
         file_path = content_info['file_path'] or "Untitled"
-        language = content_info['language']
+        language = content_info.get('language', 'Unknown')
         self.statusBar().showMessage(f"File: {file_path} | Language: {language}")
