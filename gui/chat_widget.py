@@ -52,6 +52,15 @@ class ChatWidget(QWidget):
 
         self.setLayout(layout)
 
+    def append_message(self, sender, content):
+        self.chat_display.append(f"<b>{sender}:</b> {content}<br>")
+
+    def update_chat(self, response):
+        if isinstance(response, dict) and 'content' in response:
+            self.append_message("AI", response['content'])
+        elif isinstance(response, str):
+            self.append_message("AI", response)
+
     def setup_connections(self):
 
 
