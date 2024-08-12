@@ -34,6 +34,7 @@ def main():
 
     # Create and show the main window
     main_window = MainWindow(interpreter)
+    main_window.setCentralWidget(chat_widget)
     main_window.show()
 
 if __name__ == "__main__":

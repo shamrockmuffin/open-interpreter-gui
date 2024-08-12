@@ -16,9 +16,12 @@ class ChatWidget(QWidget):
     message_processed = pyqtSignal(dict)
     message_sent = pyqtSignal(str)
 
-    def __init__(self, interpreter):
+    def __init__(self, interpreter, message_handler, file_upload_handler, ui_manager):
         super().__init__()
         self.interpreter = interpreter
+        self.message_handler = message_handler
+        self.file_upload_handler = file_upload_handler
+        self.ui_manager = ui_manager
         self.file_list_widget = None
         self.main_window = None
         self.setup_ui()
