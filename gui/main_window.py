@@ -12,6 +12,7 @@ from gui.file_display_widget import FileDisplayWidget
 # from gui.script_display_widget import ScriptDisplayWidget
 from gui.config_manager import ConfigManager
 from gui.message_handler import MessageHandler
+from gui.ui_manager import UIManager
 
 class MainWindow(QMainWindow):
     def __init__(self, interpreter):
