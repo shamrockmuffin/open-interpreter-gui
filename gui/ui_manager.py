@@ -24,13 +24,18 @@ class UIManager(QWidget):
         self.setLayout(layout)
 
     def append_message(self, sender, content):
-        # ... (rest of the method remains the same)
+        self.chat_display.append(f"{sender}: {content}")
 
     def append_code(self, code, language):
-        # ... (rest of the method remains the same)
+        self.chat_display.append(f"```{language}\n{code}\n```")
 
     def append_console_output(self, output):
-        # ... (rest of the method remains the same)
+        self.chat_display.append(f"Console output: {output}")
 
     def display_image(self, file_path):
-        # ... (rest of the method remains the same)
+        image = QImage(file_path)
+        if not image.isNull():
+            pixmap = QPixmap.fromImage(image)
+            self.chat_display.textCursor().insertImage(pixmap.toImage())
+        else:
+            self.chat_display.append(f"Failed to load image: {file_path}")
