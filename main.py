@@ -5,6 +5,14 @@ from PyQt6.QtWidgets import QApplication
 from gui.main_window import MainWindow
 from interpreter import OpenInterpreter
 from PyQt6.QtGui import QIcon
+from gui.message_handler import MessageHandler
+from gui.file_upload_handler import FileUploadHandler
+from gui.ui_manager import UIManager
+from gui.chat_widget import ChatWidget
+from gui.message_handler import MessageHandler
+from gui.file_upload_handler import FileUploadHandler
+from gui.ui_manager import UIManager
+from gui.message_handler import MessageHandler
 
 logging.basicConfig(
     level=logging.INFO,
