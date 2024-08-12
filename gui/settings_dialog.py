@@ -42,9 +42,9 @@ class SettingsDialog(QDialog):
 
     def load_current_settings(self):
         config = self.config_manager.load_config()
-        self.model_selector.setCurrentText(config.get('model', 'gpt-4-turbo'))
+        self.model_selector.setCurrentText(config.get('model', 'gpt-4o'))
         config = self.config_manager.load_config()
-        self.model_selector.setCurrentText(config.get('model', 'gpt-4-turbo'))
+        self.model_selector.setCurrentText(config.get('model', 'gpt-4o'))
         self.context_window.setText(str(config.get('context_window', 25000)))
         self.temperature.setText(str(config.get('temperature', 0.7)))
 

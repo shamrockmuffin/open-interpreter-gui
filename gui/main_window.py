@@ -213,7 +213,7 @@ class MainWindow(QMainWindow):
 
     def apply_settings(self):
         config = self.config_manager.load_config()
-        self.interpreter.llm.model = config.get('model', 'gpt-4-turbo')
+        self.interpreter.llm.model = config.get('model', 'gpt-4o')
         self.interpreter.llm.context_length = config.get('context_window', 25000)
         self.interpreter.llm.temperature = config.get('temperature', 0.7)
 
