@@ -1,121 +1,177 @@
-
-
-
-
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QLineEdit, QPushButton, QSplitter, QHBoxLayout, QFileDialog
 import os
-from PyQt6.QtCore import pyqtSignal, Qt
-from PyQt6.QtGui import QColor, QImage, QPixmap, QTextCursor, QTextCharFormat
-import logging
-from gui.constants import Colors, MessageTypes, Roles
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QLineEdit, QPushButton, QHBoxLayout, QScrollBar
+from PyQt6.QtCore import pyqtSignal, Qt, QThread
+from PyQt6.QtGui import QTextCursor, QColor, QTextCharFormat, QImage, QPixmap
 
-from gui.interpreter_thread import InterpreterThread
+class InterpreterThread(QThread):
+    output_received = pyqtSignal(dict)
 
-logger = logging.getLogger(__name__)
-
-class ChatWidget(QWidget):
-    file_operation_occurred = pyqtSignal(str, str, str)
-    message_processed = pyqtSignal(dict)
-    message_sent = pyqtSignal(str)
-
-    def __init__(self, interpreter, message_handler, file_upload_handler, ui_manager):
+    def __init__(self, interpreter, message):
         super().__init__()
         self.interpreter = interpreter
-        self.message_handler = message_handler
-        self.file_upload_handler = file_upload_handler
-        self.ui_manager = ui_manager
-        self.file_list_widget = None
-        self.main_window = None
-        self.setup_ui()
-        self.file_display_widget = None
-        self.setup_connections()
-        self.interpreter_thread = None
+        self.message = message
 
-    def setup_ui(self):
+    def run(self):
+        for response in self.interpreter.chat(self.message, display=True, stream=True):
+            self.output_received.emit(response)
+
+class ChatWidget(QWidget):
+    """
+    A signal that is emitted when a message is sent.
+    
+    This signal is emitted by the `ChatWidget` class when the user sends a message through the chat interface. The signal carries the message text as a string.
+    """
+    message_sent = pyqtSignal(str)
+    file_operation_occurred = pyqtSignal(str, str, str)
+
+    def __init__(self, interpreter):
+        super().__init__()
+        self.interpreter = interpreter
+        self.current_message = {"role": "", "content": ""}
+        self.file_list_widget = None  # Will be set later
+        self.uploaded_files = {}
+        self.main_window = None  # Will be set later
+
         layout = QVBoxLayout()
-        
+
+        # Chat display
         self.chat_display = QTextEdit()
         self.chat_display.setReadOnly(True)
+        self.chat_display.setVerticalScrollBar(QScrollBar())
         layout.addWidget(self.chat_display)
-        
+
+        # Input area
         input_layout = QHBoxLayout()
         self.input_field = QLineEdit()
+        self.input_field.returnPressed.connect(self.send_message)
         input_layout.addWidget(self.input_field)
 
         self.send_button = QPushButton("Send")
+        self.send_button.clicked.connect(self.send_message)
         input_layout.addWidget(self.send_button)
-
-        self.upload_button = QPushButton("Upload File")
-        input_layout.addWidget(self.upload_button)
 
         layout.addLayout(input_layout)
 
         self.setLayout(layout)
 
-    def append_message(self, sender, content):
-        self.chat_display.append(f"<b>{sender}:</b> {content}<br>")
-
-    def update_chat(self, response):
-        if isinstance(response, dict) and 'content' in response:
-            self.append_message("AI", response['content'])
-        elif isinstance(response, str):
-            self.append_message("AI", response)
-
-    def setup_connections(self):
-        self.input_field.returnPressed.connect(self.send_message)
-        self.send_button.clicked.connect(self.send_message)
-        self.upload_button.clicked.connect(self.upload_file)
+        self.message_sent.connect(self.handle_message)
+        self.interpreter.file_tracker.file_operation.connect(self.handle_file_operation)
 
     def set_file_list_widget(self, file_list_widget):
         self.file_list_widget = file_list_widget
 
-    def set_file_display_widget(self, file_display_widget):
-        self.file_display_widget = file_display_widget
-
     def set_main_window(self, main_window):
-        self.main_window = main_window
         self.main_window = main_window
 
     def send_message(self):
         message = self.input_field.text()
         if message:
             self.input_field.clear()
-            self.append_message("User", message)
-            self.process_message(message)
+            self.message_sent.emit(message)
 
-    def update_chat(self, response):
-        self.handle_interpreter_output(response)
+    def handle_message(self, message):
+        """
+        Handles a message sent by the user in the chat interface.
+        
+        This method is called when the user sends a message through the chat interface. It appends the message to the chat display, adds the message to the interpreter's message history, and then processes the message to generate a response.
+        
+        Args:
+            message (str): The text of the message sent by the user.
+        """
+        self.append_message("User", message)
+        self.interpreter.messages.append({
+            "role": "user",
+            "type": "message",
+            "content": message
+        })
+        self.process_message(message)
+
+    def process_message(self, message):
+        """
+        Processes a message sent by the user in the chat interface.
+        
+        This method checks if the message contains any file names that have been uploaded, and replaces those file names with the corresponding file paths. It then creates a new `InterpreterThread` instance, passing the interpreter and the message as arguments, and starts the thread. The `output_received` signal from the `InterpreterThread` instance is connected to the `handle_interpreter_output` method, which will handle the output from the interpreter.
+        
+        Args:
+            message (str): The text of the message sent by the user.
+        """
+                # Check if the message contains a file name
+        for file_name, file_path in self.uploaded_files.items():
+            if file_name in message:
+                message = message.replace(file_name, file_path)
+
+        self.interpreter_thread = InterpreterThread(self.interpreter, message)
+        self.interpreter_thread.output_received.connect(self.handle_interpreter_output)
+        self.interpreter_thread.start()
 
 
 
     def handle_interpreter_output(self, response):
-        if 'type' in response:
-            if response['type'] == MessageTypes.MESSAGE:
-                content = self.format_content_as_sentences(response.get('content', ''))
-                self.append_message(response.get('role', 'System'), content)
-            elif response['type'] == MessageTypes.CODE:
-                self.append_code(response.get('content', ''), response.get('language', 'python'))
-            elif response['type'] == MessageTypes.CONSOLE:
-                content = self.format_content_as_sentences(response.get('content', ''))
-                self.append_console_output(content)
-            else:
-                logger.warning(f"Unexpected response type: {response['type']}")
-        else:
-            logger.warning(f"Missing 'type' in response: {response}")
+          """
+          Handles the output received from the interpreter in the chat interface.
         
-        if 'start' in response or 'end' in response:
-            logger.info(f"Received {'start' if 'start' in response else 'end'} flag for {response.get('role', 'unknown')} {response.get('type', 'unknown')}")
+          This method is called when the `InterpreterThread` instance emits the `output_received` signal, indicating that the interpreter has generated some output. The method checks the type of the output (message, code, or console output) and appends the appropriate content to the chat display using the corresponding `append_*` method.
         
-        self.message_processed.emit(response)
+          If the output is a message, the method accumulates the message content until the end of the message is received, and then appends the full message to the chat display.
+        
+          If the output is code, the method accumulates the code content until the end of the code block is received, and then appends the full code block to the chat display.
+        
 
-    def format_content_as_sentences(self, content):
-        sentences = content.split('. ')
-        return '. '.join(sentence.strip() for sentence in sentences if sentence.strip())
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          If the output is console output, the method appends the output directly to the chat display.
+          """
+          if response['type'] == 'message':
+              if response.get('start', False):
+                  self.current_message = {"role": "assistant", "content": ""}
+              self.current_message["content"] += response.get('content', '')
+              if response.get('end', False):
+                  self.append_message(self.current_message["role"], self.current_message["content"])
+                  self.current_message = {"role": "", "content": ""}
+          elif response['type'] == 'code':
+              if response.get('start', False):
+                  self.current_message = {"role": "assistant", "content": "", "language": response.get('language', 'python')}
+              self.current_message["content"] += response.get('content', '')
+              if response.get('end', False):
+                  self.append_code(self.current_message["content"], self.current_message["language"])
+                  self.current_message = {"role": "", "content": ""}
+          elif response['type'] == 'console' and response.get('format') == 'output':
+              self.append_console_output(response.get('content', ''))
 
     def append_message(self, sender, content):
+        """
+        Appends a message to the chat display with the specified sender and content.
+        
+        The message is formatted with the appropriate color based on the sender:
+        - "User" messages are displayed in blue
+        - "System" messages are displayed in green
+        - All other senders are displayed in red
+        
+        The message is inserted at the end of the chat display, and the cursor is moved to ensure the message is visible.
+        
+        Args:
+            sender (str): The name of the sender of the message.
+            content (str): The content of the message.
+        """
+        cursor = self.chat_display.textCursor()
+        cursor.movePosition(QTextCursor.MoveOperation.End)
+        
         format = QTextCharFormat()
-
         if sender == "User":
             format.setForeground(QColor("blue"))
         elif sender == "System":
@@ -123,19 +179,21 @@ class ChatWidget(QWidget):
         else:
             format.setForeground(QColor("red"))
         
-        cursor = self.chat_display.textCursor()
-        cursor.movePosition(QTextCursor.MoveOperation.End)
-        cursor.insertText(f"{sender}:\n", format)
-        
-        for sentence in content.split('\n'):
-            if sentence.strip():
-                cursor.insertText(f"  {sentence.strip()}\n", format)
-        
-        cursor.insertText("\n")
+        cursor.insertText(f"{sender}: ", format)
+        cursor.insertText(f"{content}\n\n")
         self.chat_display.setTextCursor(cursor)
         self.chat_display.ensureCursorVisible()
 
     def append_code(self, code, language):
+        """
+        Appends code to the chat display with the specified language.
+        
+        The code is formatted with a purple color and inserted at the end of the chat display. The cursor is then moved to ensure the code is visible.
+        
+        Args:
+            code (str): The code to be appended.
+            language (str): The programming language of the code.
+        """
         cursor = self.chat_display.textCursor()
         cursor.movePosition(QTextCursor.MoveOperation.End)
         
@@ -149,112 +207,47 @@ class ChatWidget(QWidget):
 
     def append_console_output(self, output):
         cursor = self.chat_display.textCursor()
+
         cursor.movePosition(QTextCursor.MoveOperation.End)
         
         format = QTextCharFormat()
         format.setForeground(QColor("gray"))
         
         cursor.insertText("Console Output:\n", format)
-        for line in output.split('\n'):
-            if line.strip():
-                cursor.insertText(f"  {line.strip()}\n", format)
-        cursor.insertText("\n")
+        cursor.insertText(f"{output}\n\n")
         self.chat_display.setTextCursor(cursor)
         self.chat_display.ensureCursorVisible()
 
+    def handle_file_upload(self, file_path, file_name):
+        self.uploaded_files[file_name] = file_path
+        self.append_message("System", f"File uploaded: {file_name}")
+        self.interpreter.messages.append({
+            "role": "assistant",
+            "type": "message",
+            "content": f"A file named '{file_name}' has been uploaded. You can refer to it in your responses."
+        })
+        self.process_message(f"Analyze this file: {file_name}")
+
     def handle_file_operation(self, operation, filename, content):
+        """
+        Emits a signal to indicate that a file operation has occurred.
+        
+        Args:
+            operation (str): The type of file operation that occurred (e.g. "upload", "download", "delete").
+            filename (str): The name of the file involved in the operation.
+            content (bytes): The content of the file, if applicable (e.g. for upload or download operations).
+        """
         self.file_operation_occurred.emit(operation, filename, content)
 
-
-    def process_message(self, message):
-        try:
-            if self.file_list_widget:
-                for file_name, file_path in self.file_list_widget.get_uploaded_files().items():
-                    if file_name in message:
-                        message = message.replace(file_name, file_path)
-
-            if message.startswith("create_file:"):
-                _, file_path, content = message.split(":", 2)
-                result = self.interpreter.create_file(file_path.strip(), content.strip())
-                self.append_message("System", result)
-            elif message.startswith("modify_file:"):
-                _, file_path, content = message.split(":", 2)
-                result = self.interpreter.modify_file(file_path.strip(), content.strip())
-                self.append_message("System", result)
-            elif message.startswith("delete_file:"):
-                _, file_path = message.split(":", 1)
-                result = self.interpreter.delete_file(file_path.strip())
-                self.append_message("System", result)
-            elif message.startswith("read_file:"):
-                _, file_path = message.split(":", 1)
-                content = self.interpreter.read_file(file_path.strip())
-                self.append_message("System", f"Content of {file_path.strip()}:\n{content}")
-            else:
-                self.interpreter_thread = InterpreterThread(self.interpreter, message)
-                self.interpreter_thread.output_received.connect(self.handle_interpreter_output)
-                self.interpreter_thread.processing_started.connect(self.on_processing_started)
-                self.interpreter_thread.processing_finished.connect(self.on_processing_finished)
-                self.interpreter_thread.start()
-
-            logger.info(f"Processing message: {message}")
-        except Exception as e:
-            logger.error(f"Error processing message: {str(e)}")
-            self.append_message("System", "An error occurred while processing your message.")
-
-    def on_processing_started(self):
-        self.send_button.setEnabled(False)
-        self.input_field.setEnabled(False)
-        self.append_message("System", "Processing your request...")
-
-    def on_processing_finished(self):
-        self.send_button.setEnabled(True)
-        self.input_field.setEnabled(True)
-        self.append_message("System", "Processing completed.")
-
-
-
-
-
-    def upload_file(self):
-        file_dialog = QFileDialog()
-        file_path, _ = file_dialog.getOpenFileName(self, "Upload File")
-        if file_path:
-            file_name = os.path.basename(file_path)
-            try:
-                message = f"File uploaded: {file_name}"
-                self.append_message("System", message)
-                self.interpreter.messages.append({
-                    "role": "user",
-                    "type": "message",
-                    "content": f"A file named '{file_name}' has been uploaded. You can refer to it in your responses."
-                })
-                self.process_message(f"Analyze this file: {file_path}")
-
-                logger.info(f"File uploaded: {file_name}")
-            except Exception as e:
-                logger.error(f"Error handling file upload: {str(e)}")
-                self.append_message("System", "An error occurred while uploading the file.")
-
-    def clear_chat(self):
-
-        self.chat_display.clear()
-        self.interpreter.messages = []
-
-        if self.file_list_widget:
-            self.file_list_widget.clear_list()
-
     def display_image(self, file_path):
-        if self.file_display_widget:
-            self.file_display_widget.display_image(file_path)
-        else:
-            image = QImage(file_path)
-            if not image.isNull():
-                pixmap = QPixmap.fromImage(image)
-                scaled_pixmap = pixmap.scaled(300, 300, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-                self.chat_display.textCursor().insertImage(scaled_pixmap.toImage())
-                self.chat_display.append("")  # Add a new line after the image
-            else:
-                self.append_message("System", f"Failed to load image: {file_path}")
+        """
+        Displays an image in the chat display.
+        
+        Args:
+            file_path (str): The file path of the image to be displayed.
+        
+        This method loads the image from the given file path, scales it to a maximum size of 300x300 pixels while maintaining the aspect ratio, and inserts the scaled image into the chat display. If the image fails to load, a message is appended to the chat display indicating the failure.
+        """
         image = QImage(file_path)
         if not image.isNull():
             pixmap = QPixmap.fromImage(image)
@@ -262,10 +255,14 @@ class ChatWidget(QWidget):
             self.chat_display.textCursor().insertImage(scaled_pixmap.toImage())
             self.chat_display.append("")  # Add a new line after the image
         else:
-
-
-
-
-
-
             self.append_message("System", f"Failed to load image: {file_path}")
+
+    def clear_chat(self):
+        """
+        Clears the chat display, resets the interpreter's message history, and clears the uploaded files dictionary.
+        
+        This method is used to reset the state of the chat widget, removing all previous messages, file uploads, and interpreter history. It is typically called when the user wants to start a new conversation or clear the chat display.
+        """
+        self.chat_display.clear()
+        self.interpreter.messages = []
+        self.uploaded_files = {}
