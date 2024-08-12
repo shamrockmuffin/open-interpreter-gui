@@ -1,5 +1,9 @@
 from interpreter import OpenInterpreter
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 class MessageHandler:
     def __init__(self, interpreter):
         self.interpreter = interpreter
@@ -9,4 +13,5 @@ class MessageHandler:
             for response in self.interpreter.chat(message, display=False, stream=True):
                 yield response
         except Exception as e:
-            yield {"type": "error", "content": str(e)}
+            logger.error(f"Error processing message: {str(e)}")
+            yield {"type": "error", "content": f"An error occurred: {str(e)}"}

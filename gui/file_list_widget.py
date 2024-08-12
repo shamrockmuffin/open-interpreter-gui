@@ -57,3 +57,12 @@ class FileListWidget(QWidget):
         self.clear_list()
         for file_path in self.interpreter.workspace_manager.get_files():
             self.add_file_to_list(file_path)
+
+    def get_uploaded_files(self):
+        uploaded_files = {}
+        for index in range(self.file_list.count()):
+            item = self.file_list.item(index)
+            file_name = item.text()
+            file_path = item.data(Qt.ItemDataRole.UserRole)
+            uploaded_files[file_name] = file_path
+        return uploaded_files
