@@ -464,21 +464,6 @@ class OpenInterpreter:
         """
         return self.messages
 
-    def set_workspace(self, path):
-        """
-        Sets a new workspace path.
-        Useful for GUI applications to change the working directory.
-        """
-        self.workspace_path = path
-        self.workspace_manager.set_workspace_path(path)
-
-    def get_available_languages(self):
-        """
-        Returns a list of available programming languages.
-        Useful for GUI applications to populate language selection dropdowns.
-        """
-        return self.computer.terminal.languages
-
     def get_system_info(self):
         """
         Returns system information.
@@ -489,7 +474,6 @@ class OpenInterpreter:
             "offline": self.offline,
             "llm_model": self.llm.model,
             "safe_mode": self.safe_mode,
-            "workspace_path": self.workspace_path,
         }
 
 

@@ -31,24 +31,21 @@ class ChatWidget(QWidget):
     def setup_ui(self):
         layout = QVBoxLayout()
         
-        # Create a splitter for chat display and code output
-        splitter = QSplitter(Qt.Orientation.Vertical)
-        
         self.chat_display = QTextEdit()
         self.chat_display.setReadOnly(True)
-        splitter.addWidget(self.chat_display)
+        layout.addWidget(self.chat_display)
         
-        self.code_output = QTextEdit()
-        self.code_output.setReadOnly(True)
-        splitter.addWidget(self.code_output)
-        
-        layout.addWidget(splitter)
-
+        input_layout = QHBoxLayout()
         self.input_field = QLineEdit()
-        layout.addWidget(self.input_field)
+        input_layout.addWidget(self.input_field)
 
         self.send_button = QPushButton("Send")
-        layout.addWidget(self.send_button)
+        input_layout.addWidget(self.send_button)
+
+        self.upload_button = QPushButton("Upload File")
+        input_layout.addWidget(self.upload_button)
+
+        layout.addLayout(input_layout)
 
         self.setLayout(layout)
 
@@ -62,11 +59,9 @@ class ChatWidget(QWidget):
             self.append_message("AI", response)
 
     def setup_connections(self):
-
-
-
         self.input_field.returnPressed.connect(self.send_message)
         self.send_button.clicked.connect(self.send_message)
+        self.upload_button.clicked.connect(self.upload_file)
 
     def set_file_list_widget(self, file_list_widget):
         self.file_list_widget = file_list_widget
@@ -213,25 +208,25 @@ class ChatWidget(QWidget):
 
 
 
-    def handle_file_upload(self, file_path, file_name):
-        try:
+    def upload_file(self):
+        file_dialog = QFileDialog()
+        file_path, _ = file_dialog.getOpenFileName(self, "Upload File")
+        if file_path:
+            file_name = os.path.basename(file_path)
+            try:
+                message = f"File uploaded: {file_name}"
+                self.append_message("System", message)
+                self.interpreter.messages.append({
+                    "role": "user",
+                    "type": "message",
+                    "content": f"A file named '{file_name}' has been uploaded. You can refer to it in your responses."
+                })
+                self.process_message(f"Analyze this file: {file_path}")
 
-
-            message = f"File uploaded: {file_name}"
-            self.append_message("System", message)
-            self.interpreter.messages.append({
-                "role": "user",
-                "type": "message",
-                "content": f"A file named '{file_name}' has been uploaded. You can refer to it in your responses."
-            })
-            self.process_message(f"Analyze this file: {file_name}")
-
-            logger.info(f"File uploaded: {file_name}")
-        except Exception as e:
-            logger.error(f"Error handling file upload: {str(e)}")
-
-
-            self.append_message("System", "An error occurred while uploading the file.")
+                logger.info(f"File uploaded: {file_name}")
+            except Exception as e:
+                logger.error(f"Error handling file upload: {str(e)}")
+                self.append_message("System", "An error occurred while uploading the file.")
 
     def clear_chat(self):
 
