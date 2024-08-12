@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import QApplication
 from gui.main_window import MainWindow
 from interpreter import OpenInterpreter
 from gui.message_handler import MessageHandler
+from gui.config_manager import ConfigManager
 from gui.file_upload_handler import FileUploadHandler
 from gui.ui_manager import UIManager
 from gui.chat_widget import ChatWidget
@@ -20,6 +21,9 @@ logging.basicConfig(
 
 def main():
     
+    config_manager = ConfigManager()
+    config = config_manager.default_config
+
     interpreter = OpenInterpreter()
     interpreter.system_message = "You are Open Interpreter, a world-class programmer that can complete any goal by writing and executing code."
     interpreter.auto_run = True
