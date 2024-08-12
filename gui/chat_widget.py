@@ -80,19 +80,22 @@ class ChatWidget(QWidget):
         elif response['type'] == MessageTypes.CONSOLE and 'content' in response:
             self.append_console_output(response['content'])
         
-        self.update_chat(response)
+        self.handle_interpreter_output(response)
 
 
 
     def handle_interpreter_output(self, response):
-        if response['type'] == MessageTypes.MESSAGE and 'content' in response:
-            self.append_message(response['role'], response['content'])
-        elif response['type'] == MessageTypes.CODE and 'content' in response:
-            self.append_code(response['content'], response.get('language', 'python'))
-        elif response['type'] == MessageTypes.CONSOLE and 'content' in response:
-            self.append_console_output(response['content'])
+        if 'content' in response:
+            if response['type'] == MessageTypes.MESSAGE:
+                self.append_message(response['role'], response['content'])
+            elif response['type'] == MessageTypes.CODE:
+                self.append_code(response['content'], response.get('language', 'python'))
+            elif response['type'] == MessageTypes.CONSOLE:
+                self.append_console_output(response['content'])
+            else:
+                logger.error(f"Unexpected response format: {response}")
         else:
-            logger.error(f"Unexpected response format: {response}")
+            logger.error(f"Missing 'content' in response: {response}")
         
         self.message_processed.emit(response)
 
