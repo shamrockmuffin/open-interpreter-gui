@@ -85,7 +85,20 @@ class MainWindow(QMainWindow):
     def handle_file_operation(self, operation, filename, content):
         self.script_display.display_file_operation(operation, filename, content)
         self.file_list_widget.refresh_file_list()
-        self.update_status_bar({"file_path": filename, "language": "Unknown"})
+        language = self.detect_language(filename)
+        self.update_status_bar({"file_path": filename, "language": language})
+
+    def detect_language(self, filename):
+        extension = filename.split('.')[-1].lower()
+        language_map = {
+            'py': 'Python',
+            'js': 'JavaScript',
+            'html': 'HTML',
+            'css': 'CSS',
+            'json': 'JSON',
+            'txt': 'Plain Text'
+        }
+        return language_map.get(extension, 'Unknown')
     def display_file(self, file_path):
         self.file_display.clear()
         file_extension = file_path.split('.')[-1].lower()
