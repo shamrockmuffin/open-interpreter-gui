@@ -42,6 +42,20 @@ class FileListWidget(QWidget):
             self.add_file_to_list(file_path)
             self.file_uploaded.emit(file_path, file_name)
 
+    def download_file(self):
+        selected_items = self.file_list.selectedItems()
+        if not selected_items:
+            return
+        
+        file_path = selected_items[0].data(Qt.ItemDataRole.UserRole)
+        save_path, _ = QFileDialog.getSaveFileName(self, "Download File", file_path)
+        if save_path:
+            try:
+                with open(file_path, 'rb') as source, open(save_path, 'wb') as destination:
+                    destination.write(source.read())
+            except IOError as e:
+                print(f"Error downloading file: {e}")
+
     def add_file_to_list(self, file_path):
         file_name = os.path.basename(file_path)
         item = QListWidgetItem(file_name)
