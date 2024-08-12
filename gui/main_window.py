@@ -94,7 +94,7 @@ class MainWindow(QMainWindow):
         
         upload_action = QAction(QIcon(), "Upload File", self)
         upload_action.setShortcut("Ctrl+U")
-        upload_action.triggered.connect(self.file_list_widget.upload_file)
+        upload_action.triggered.connect(self.file_list_widget.upload_files)
         file_menu.addAction(upload_action)
 
         file_menu.addSeparator()
