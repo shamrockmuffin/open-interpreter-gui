@@ -21,7 +21,6 @@ logging.basicConfig(
 
 def main():
     
-    
     config_manager = ConfigManager()
     config = config_manager.default_config
 
