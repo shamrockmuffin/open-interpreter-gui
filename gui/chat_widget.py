@@ -2,9 +2,9 @@
 
 
 
-from PyQt6.QtWidgets import QWidget, QTextCursor, QTextCharFormat, QVBoxLayout, QTextEdit, QLineEdit, QPushButton
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QLineEdit, QPushButton
 from PyQt6.QtCore import pyqtSignal, Qt
-from PyQt6.QtGui import QColor, QImage, QPixmap
+from PyQt6.QtGui import QColor, QImage, QPixmap, QTextCursor, QTextCharFormat
 import logging
 from .constants import Colors, MessageTypes, Roles
 from .interpreter_thread import InterpreterThread
