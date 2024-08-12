@@ -19,8 +19,22 @@ from ..terminal_interface.terminal_interface import terminal_interface
 from ..terminal_interface.utils.display_markdown_message import display_markdown_message
 from ..terminal_interface.utils.local_storage_path import get_storage_path
 from ..terminal_interface.utils.oi_dir import oi_dir
-from ..gui.workspace_manager import WorkspaceManager
+from PyQt6.QtCore import QObject, pyqtSignal
+import builtins
 
+class FileOperationTracker(QObject):
+    file_operation = pyqtSignal(str, str, str)
+
+    def open(self, file, mode='r', *args, **kwargs):
+        f = builtins.open(file, mode, *args, **kwargs)
+        if 'w' in mode or 'a' in mode:
+            self.file_operation.emit('open', file, f'File opened in {mode} mode')
+        return f
+
+    def write(self, f, data):
+        result = f.write(data)
+        self.file_operation.emit('write', f.name, data)
+        return result
 class OpenInterpreter:
     """
     This class (one instance is called an `interpreter`) is the "grand central station" of this project.
@@ -80,8 +94,12 @@ class OpenInterpreter:
             multi_line=True,
             contribute_conversation=False,
             
+            
     ):
         # State
+        self.file_tracker = FileOperationTracker()
+        self.setup_file_tracking()
+
         self.messages = [] if messages is None else messages
         self.responding = False
         self.last_messages_count = 0
@@ -148,11 +166,17 @@ class OpenInterpreter:
             time.sleep(0.2)
         # Return new messages
         return self.messages[self.last_messages_count:]
-
+    def setup_file_tracking(self):
+        def custom_open(*args, **kwargs):
+            return self.file_tracker.open(*args, **kwargs)
     @property
     def anonymous_telemetry(self) -> bool:
         return not self.disable_telemetry and not self.offline
-
+    def custom_write(f, data):
+        return self.file_tracker.write(f, data)
+        self.locals = {}
+            self.locals['open'] = custom_open
+            self.locals['write'] = custom_write
     @property
     def will_contribute(self):
         overrides = (
@@ -220,6 +244,7 @@ class OpenInterpreter:
 
         try:
             # Run the code
+            exec(code, self.locals)
             result = self.computer.run(language, code)
         finally:
             # Change back to original working directory
