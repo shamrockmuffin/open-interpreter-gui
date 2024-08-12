@@ -20,8 +20,8 @@ class MainWindow(QMainWindow):
         self.init_ui()
         self.create_menu_bar()
         self.create_status_bar()
-        self.code_editor.analysis_complete.connect(self.chat_widget.display_analysis)
         self.chat_widget.set_code_editor(self.code_editor)
+        self.code_editor.analysis_complete.connect(self.chat_widget.display_analysis)
 
     def init_ui(self):
         main_widget = QWidget()
