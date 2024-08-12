@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QSplitter
+from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QSplitter, QDialog, QTableWidget, QTableWidgetItem
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtCore import Qt
 from gui.chat_widget import ChatWidget
@@ -141,7 +141,6 @@ class MainWindow(QMainWindow):
         view_usage_stats_action.triggered.connect(self.view_usage_statistics)
         tools_menu.addAction(view_usage_stats_action)
         self.save_chat_history()
-        event.accept()
 
     def view_usage_statistics(self):
         usage_stats = self.usage_tracker.get_usage_statistics()
