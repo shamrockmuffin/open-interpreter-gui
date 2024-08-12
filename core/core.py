@@ -20,6 +20,7 @@ from ..terminal_interface.utils.display_markdown_message import display_markdown
 from ..terminal_interface.utils.local_storage_path import get_storage_path
 from ..terminal_interface.utils.oi_dir import oi_dir
 from PyQt6.QtCore import QObject, pyqtSignal
+import requests
 import builtins
 from .workspace import WorkspaceManager
 
@@ -188,6 +189,19 @@ class OpenInterpreter:
         return self.contribute_conversation and not overrides
 
     def chat(self, message=None, display=True, stream=False, blocking=True):
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "HTTP-Referer": self.site_url,
+            "X-Title": self.site_name,
+            "Content-Type": "application/json"
+        }
+        data = {
+            "model": self.llm.model,
+            "messages": [{"role": "user", "content": message}]
+        }
+        response = requests.post(self.api_base, headers=headers, json=data)
+        response_data = response.json()
+        return response_data
         try:
             self.responding = True
             if self.anonymous_telemetry:

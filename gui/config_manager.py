@@ -9,7 +9,10 @@ class ConfigManager:
             'default_model': 'gpt-4o',
             'context_window': 25000,
             'temperature': 0.7,
-            'api_base': 'https://openrouter.ai/api/v1'
+            'api_base': 'https://openrouter.ai/api/v1',
+            'api_key': '',
+            'site_url': '',
+            'site_name': ''
         }
 
     def save_config(self, config):

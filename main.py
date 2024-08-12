@@ -29,7 +29,9 @@ def main():
     interpreter.auto_run = True
     interpreter.api_base = config.get('api_base', 'https://openrouter.ai/api/v1')
     interpreter.model = "openai/gpt-4o"
-    interpreter.api_key = " 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"
+    interpreter.api_key = config.get('api_key', '')
+    interpreter.site_url = config.get('site_url', '')
+    interpreter.site_name = config.get('site_name', '')
     message_handler = MessageHandler(interpreter)
     file_upload_handler = FileUploadHandler()
     ui_manager = UIManager()
