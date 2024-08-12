@@ -19,6 +19,7 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     filename='chat_application.log'
 )
+app = QApplication([])
 
 def main():
     
