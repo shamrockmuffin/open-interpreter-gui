@@ -7,6 +7,7 @@ from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtGui import QColor, QImage, QPixmap
 import logging
 from .constants import Colors, MessageTypes, Roles
+from .interpreter_thread import InterpreterThread
 
 logger = logging.getLogger(__name__)
 
