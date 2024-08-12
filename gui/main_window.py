@@ -2,14 +2,15 @@ import os
 from datetime import datetime
 from PyQt6.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, 
                              QMenuBar, QStatusBar, QSplitter, QMessageBox, 
-                             QListWidget, QStackedWidget, QPushButton, QComboBox)
+                             QListWidget, QStackedWidget, QPushButton, QComboBox,
+                             QTextEdit)
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtCore import Qt, pyqtSlot
 from gui.chat_widget import ChatWidget
 from gui.file_list_widget import FileListWidget
 from gui.settings_dialog import SettingsDialog
 from gui.file_display_widget import FileDisplayWidget
-from gui.script_display_widget import ScriptDisplayWidget
+# from gui.script_display_widget import ScriptDisplayWidget
 from gui.config_manager import ConfigManager
 from gui.message_handler import MessageHandler
 
@@ -61,7 +62,8 @@ class MainWindow(QMainWindow):
         self.chat_stack = QStackedWidget()
         center_layout.addWidget(self.chat_stack)
         
-        self.script_display = ScriptDisplayWidget()
+        self.script_display = QTextEdit()  # Temporary replacement for ScriptDisplayWidget
+        self.script_display.setReadOnly(True)
         center_layout.addWidget(self.script_display)
 
         # Right panel: File list and file display
@@ -126,7 +128,7 @@ class MainWindow(QMainWindow):
             current_chat.handle_file_upload(file_path, file_name)
 
     def handle_file_operation(self, operation, filename, content):
-        self.script_display.display_file_operation(operation, filename, content)
+        self.script_display.append(f"{operation} - {filename}:\n{content}\n")
         self.file_list_widget.refresh_file_list()
         language = self.detect_language(filename)
         self.update_status_bar({"file_path": filename, "language": language})
