@@ -19,6 +19,7 @@ logging.basicConfig(
 )
 
 def main():
+    
     interpreter = OpenInterpreter()
     interpreter.system_message = "You are Open Interpreter, a world-class programmer that can complete any goal by writing and executing code."
     interpreter.auto_run = True
