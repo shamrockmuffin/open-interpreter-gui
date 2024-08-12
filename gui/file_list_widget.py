@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QListWidget, QLis
 from PyQt6.QtCore import pyqtSignal, Qt
 
 class FileListWidget(QWidget):
-    file_uploaded = pyqtSignal(str, str)  # Emit both file path and file name
+    file_uploaded = pyqtSignal(list, list)  # Emit lists of file paths and file names
     file_selected = pyqtSignal(str)  # Emit file path when selected
 
     def __init__(self, interpreter, chat_widget):
@@ -27,10 +27,10 @@ class FileListWidget(QWidget):
 
     def upload_files(self):
         file_paths, _ = QFileDialog.getOpenFileNames(self, "Upload Files")
+        file_names = [os.path.basename(file_path) for file_path in file_paths]
         for file_path in file_paths:
-            file_name = os.path.basename(file_path)
             self.add_file_to_list(file_path)
-            self.file_uploaded.emit(file_path, file_name)
+        self.file_uploaded.emit(file_paths, file_names)
 
     def add_file_to_list(self, file_path):
         file_name = os.path.basename(file_path)
