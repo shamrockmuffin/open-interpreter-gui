@@ -142,7 +142,7 @@ class OpenInterpreter:
 
         # LLM
         from .llm.llm import Llm
-        self.llm = Llm() if llm is None else llm
+        self.llm = Llm(self) if llm is None else llm
 
         # These are LLM related
         self.system_message = system_message
