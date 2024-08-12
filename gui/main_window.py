@@ -140,7 +140,6 @@ class MainWindow(QMainWindow):
         view_usage_stats_action = QAction("View Usage Statistics", self)
         view_usage_stats_action.triggered.connect(self.view_usage_statistics)
         tools_menu.addAction(view_usage_stats_action)
-        self.save_chat_history()
 
     def view_usage_statistics(self):
         usage_stats = self.usage_tracker.get_usage_statistics()
