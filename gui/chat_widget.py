@@ -168,11 +168,28 @@ class ChatWidget(QWidget):
                     if file_name in message:
                         message = message.replace(file_name, file_path)
 
-            self.interpreter_thread = InterpreterThread(self.interpreter, message)
-            self.interpreter_thread.output_received.connect(self.handle_interpreter_output)
-            self.interpreter_thread.processing_started.connect(self.on_processing_started)
-            self.interpreter_thread.processing_finished.connect(self.on_processing_finished)
-            self.interpreter_thread.start()
+            if message.startswith("create_file:"):
+                _, file_path, content = message.split(":", 2)
+                result = self.interpreter.create_file(file_path.strip(), content.strip())
+                self.append_message("System", result)
+            elif message.startswith("modify_file:"):
+                _, file_path, content = message.split(":", 2)
+                result = self.interpreter.modify_file(file_path.strip(), content.strip())
+                self.append_message("System", result)
+            elif message.startswith("delete_file:"):
+                _, file_path = message.split(":", 1)
+                result = self.interpreter.delete_file(file_path.strip())
+                self.append_message("System", result)
+            elif message.startswith("read_file:"):
+                _, file_path = message.split(":", 1)
+                content = self.interpreter.read_file(file_path.strip())
+                self.append_message("System", f"Content of {file_path.strip()}:\n{content}")
+            else:
+                self.interpreter_thread = InterpreterThread(self.interpreter, message)
+                self.interpreter_thread.output_received.connect(self.handle_interpreter_output)
+                self.interpreter_thread.processing_started.connect(self.on_processing_started)
+                self.interpreter_thread.processing_finished.connect(self.on_processing_finished)
+                self.interpreter_thread.start()
 
             logger.info(f"Processing message: {message}")
         except Exception as e:
