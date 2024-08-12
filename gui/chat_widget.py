@@ -222,7 +222,7 @@ class ChatWidget(QWidget):
         self.chat_display.setTextCursor(cursor)
         self.chat_display.ensureCursorVisible()
 
-    def handle_file_upload(self, file_path, file_name):
+    def handle_file_upload(self, file_paths, file_names):
         for file_name, file_path in zip(file_names, file_paths):
             self.uploaded_files[file_name] = file_path
         self.append_message("System", f"File uploaded: {file_name}")
