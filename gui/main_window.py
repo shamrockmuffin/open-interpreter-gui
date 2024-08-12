@@ -7,6 +7,7 @@ from gui.chat_widget import ChatWidget
 from gui.file_list_widget import FileListWidget
 from gui.settings_dialog import SettingsDialog
 from gui.file_display_widget import FileDisplayWidget
+from core.usage_tracker import UsageTracker
 from gui.script_display_widget import ScriptDisplayWidget
 
 class MainWindow(QMainWindow):
@@ -14,7 +15,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.interpreter = interpreter
         self.config_manager = config_manager
-        self.setWindowTitle("Open Interpreter")
+        self.usage_tracker = UsageTracker()
         self.setGeometry(100, 100, 1200, 800)
 
         self.chat_widget = None
@@ -110,11 +111,50 @@ class MainWindow(QMainWindow):
         settings_action.triggered.connect(self.open_settings)
         edit_menu.addAction(settings_action)
 
-    def closeEvent(self, event):
+    def create_menu_bar(self):
+        menu_bar = self.menuBar()
+
+        # File menu
+        file_menu = menu_bar.addMenu("File")
+        
+        upload_action = QAction(QIcon(), "Upload File", self)
+        upload_action.setShortcut("Ctrl+U")
+        upload_action.triggered.connect(self.file_list_widget.upload_files)
+        file_menu.addAction(upload_action)
+
+        file_menu.addSeparator()
+
+        exit_action = QAction(QIcon(), "Exit", self)
+        exit_action.setShortcut("Ctrl+Q")
+        exit_action.triggered.connect(self.close)
+        file_menu.addAction(exit_action)
+
+        # Edit menu
+        edit_menu = menu_bar.addMenu("Edit")
+        settings_action = QAction(QIcon(), "Settings", self)
+        settings_action.triggered.connect(self.open_settings)
+        edit_menu.addAction(settings_action)
+
+        # Tools menu
+        tools_menu = menu_bar.addMenu("Tools")
+        view_usage_stats_action = QAction("View Usage Statistics", self)
+        view_usage_stats_action.triggered.connect(self.view_usage_statistics)
+        tools_menu.addAction(view_usage_stats_action)
         self.save_chat_history()
         event.accept()
 
-    def save_chat_history(self):
+    def view_usage_statistics(self):
+        usage_stats = self.usage_tracker.get_usage_statistics()
+        dialog = QDialog(self)
+        layout = QVBoxLayout()
+        table_widget = QTableWidget(len(usage_stats), 2)
+        table_widget.setHorizontalHeaderLabels(["Action", "Average Duration"])
+        for i, (action, avg_duration) in enumerate(usage_stats):
+            table_widget.setItem(i, 0, QTableWidgetItem(action))
+            table_widget.setItem(i, 1, QTableWidgetItem(str(avg_duration)))
+        layout.addWidget(table_widget)
+        dialog.setLayout(layout)
+        dialog.exec()
         chat_history = self.chat_widget.chat_display.toPlainText()
         if not chat_history.strip():
             return
