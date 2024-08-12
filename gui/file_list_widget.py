@@ -25,9 +25,9 @@ class FileListWidget(QWidget):
 
         self.setLayout(layout)
 
-    def upload_file(self):
-        file_path, _ = QFileDialog.getOpenFileName(self, "Upload File")
-        if file_path:
+    def upload_files(self):
+        file_paths, _ = QFileDialog.getOpenFileNames(self, "Upload Files")
+        for file_path in file_paths:
             file_name = os.path.basename(file_path)
             self.add_file_to_list(file_path)
             self.file_uploaded.emit(file_path, file_name)
