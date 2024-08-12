@@ -19,8 +19,8 @@ class FileListWidget(QWidget):
         layout.addWidget(self.file_list)
 
         # Upload button
-        self.upload_button = QPushButton("Upload File")
-        self.upload_button.clicked.connect(self.upload_file)
+        self.upload_button = QPushButton("Upload Files")
+        self.upload_button.clicked.connect(self.upload_files)
         layout.addWidget(self.upload_button)
 
         self.setLayout(layout)
