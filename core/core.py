@@ -173,11 +173,13 @@ class OpenInterpreter:
     @property
     def anonymous_telemetry(self) -> bool:
         return not self.disable_telemetry and not self.offline
-    def custom_write(f, data):
+    def custom_write(self, f, data):
         return self.file_tracker.write(f, data)
+
+    def setup_file_tracking(self):
         self.locals = {}
-            self.locals['open'] = custom_open
-            self.locals['write'] = custom_write
+        self.locals['open'] = self.file_tracker.open
+        self.locals['write'] = self.custom_write
     @property
     def will_contribute(self):
         overrides = (
