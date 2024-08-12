@@ -110,7 +110,6 @@ class MainWindow(QMainWindow):
     def connect_components(self):
         self.file_list_widget.file_uploaded.connect(self.handle_file_upload)
         self.file_list_widget.file_selected.connect(self.display_file)
-        self.interpreter.file_tracker.file_operation.connect(self.handle_file_operation)
         self.chat_list.currentRowChanged.connect(self.switch_chat)
 
     @pyqtSlot(str)
@@ -132,7 +131,7 @@ class MainWindow(QMainWindow):
             current_chat.handle_file_upload(file_path, file_name)
 
     def handle_file_operation(self, operation, filename, content):
-        self.script_display.append(f"{operation} - {filename}:\n{content}\n")
+        self.script_display.setText(f"{operation} - {filename}:\n{content}\n")
         self.file_list_widget.refresh_file_list()
         language = self.detect_language(filename)
         self.update_status_bar({"file_path": filename, "language": language})
