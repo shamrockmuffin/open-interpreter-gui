@@ -194,16 +194,6 @@ class OpenInterpreter:
     def chat(self, message=None, display=True, stream=False, blocking=True):
         try:
             self.responding = True
-            if self.anonymous_telemetry:
-                message_type = type(message).__name__ if message else None
-                send_telemetry(
-                    "started_chat",
-                    properties={
-                        "in_terminal_interface": self.in_terminal_interface,
-                        "message_type": message_type,
-                        "os_mode": self.os,
-                    },
-                )
 
             if not blocking:
                 chat_thread = threading.Thread(
@@ -225,17 +215,6 @@ class OpenInterpreter:
 
         except Exception as e:
             self.responding = False
-            if self.anonymous_telemetry:
-                message_type = type(message).__name__ if message else None
-                send_telemetry(
-                    "errored",
-                    properties={
-                        "error": str(e),
-                        "in_terminal_interface": self.in_terminal_interface,
-                        "message_type": message_type,
-                        "os_mode": self.os,
-                    },
-                )
             raise
 
     def create_file(self, file_path, content):
