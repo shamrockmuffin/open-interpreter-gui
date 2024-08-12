@@ -12,7 +12,7 @@ import uuid
 import requests
 import tokentrim as tt
 
-from ...terminal_interface.utils.display_markdown_message import (
+from terminal_interface.utils.display_markdown_message import (
     display_markdown_message,
 )
 from .run_function_calling_llm import run_function_calling_llm
