@@ -37,6 +37,8 @@ class FileOperationTracker(QObject):
         result = f.write(data)
         self.file_operation.emit('write', f.name, data)
         return result
+import os
+
 class OpenInterpreter:
     """
     This class (one instance is called an `interpreter`) is the "grand central station" of this project.
@@ -48,6 +50,7 @@ class OpenInterpreter:
     3. Send code to the computer.
     4. Parse the computer's response (which will already be LMC Messages).
     5. Send the computer's response back to the language model.
+    6. Handle file operations (create, modify, delete) within the local system.
     ...
 
     The above process should repeat—going back and forth between the language model and the computer— until:
