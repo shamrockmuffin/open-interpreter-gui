@@ -8,7 +8,8 @@ import threading
 import time
 from datetime import datetime
 from queue import Queue
-from . import llm
+
+from .core import llm
 from .computer.computer import Computer
 from .default_system_message import default_system_message
 from .respond import respond
