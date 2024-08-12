@@ -3,10 +3,9 @@
 
 
 from PyQt6.QtWidgets import QWidget, QTextCursor, QTextCharFormat, QVBoxLayout, QTextEdit, QLineEdit, QPushButton
-from PyQt6.QtCore import pyqtSignal, QThread, Qt
+from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtGui import QColor, QImage, QPixmap
 import logging
-from .interpreter_thread import InterpreterThread
 from .constants import Colors, MessageTypes, Roles
 
 logger = logging.getLogger(__name__)
@@ -14,6 +13,7 @@ logger = logging.getLogger(__name__)
 class ChatWidget(QWidget):
     file_operation_occurred = pyqtSignal(str, str, str)
     message_processed = pyqtSignal(dict)
+    message_sent = pyqtSignal(str)
 
     def __init__(self, interpreter):
         super().__init__()
@@ -52,22 +52,21 @@ class ChatWidget(QWidget):
         self.main_window = main_window
 
     def send_message(self):
-
         message = self.input_field.text()
         if message:
-
             self.input_field.clear()
-            self.handle_message(message)
+            self.append_message("User", message)
+            self.message_sent.emit(message)
 
-    def handle_message(self, message):
-
-        self.append_message("User", message)
-        self.interpreter.messages.append({
-            "role": "user",
-            "type": "message",
-            "content": message
-        })
-        self.process_message(message)
+    def update_chat(self, response):
+        if response['type'] == MessageTypes.MESSAGE:
+            self.append_message(response['role'], response['content'])
+        elif response['type'] == MessageTypes.CODE:
+            self.append_code(response['content'], response.get('language', 'python'))
+        elif response['type'] == MessageTypes.CONSOLE:
+            self.append_console_output(response['content'])
+        
+        self.message_processed.emit(response)
 
 
 

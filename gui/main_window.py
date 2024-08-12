@@ -1,14 +1,15 @@
 import os
 from datetime import datetime
-from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QMenuBar, QStatusBar, QSplitter
+from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QMenuBar, QStatusBar, QSplitter, QMessageBox
 from PyQt6.QtGui import QAction, QIcon
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSlot
 from .chat_widget import ChatWidget
 from .file_list_widget import FileListWidget
 from .settings_dialog import SettingsDialog
 from .file_display_widget import FileDisplayWidget
 from .script_display_widget import ScriptDisplayWidget
 from .config_manager import ConfigManager
+from .message_handler import MessageHandler
 
 class MainWindow(QMainWindow):
     def __init__(self, interpreter):
@@ -22,6 +23,7 @@ class MainWindow(QMainWindow):
         self.file_display = None
         self.script_display = None
         self.config_manager = ConfigManager()
+        self.message_handler = MessageHandler(self.interpreter)
 
         self.init_ui()
         self.create_menu_bar()
@@ -70,6 +72,20 @@ class MainWindow(QMainWindow):
         self.file_list_widget.file_selected.connect(self.display_file)
         self.chat_widget.file_operation_occurred.connect(self.script_display.display_file_operation)
         self.interpreter.file_operation.connect(self.handle_file_operation)
+        self.chat_widget.message_sent.connect(self.process_message)
+
+    @pyqtSlot(str)
+    def process_message(self, message):
+        try:
+            for response in self.message_handler.process_message(message):
+                self.chat_widget.update_chat(response)
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
+
+    def handle_file_operation(self, operation, filename, content):
+        self.script_display.display_file_operation(operation, filename, content)
+        self.file_list_widget.refresh_file_list()
+        self.update_status_bar({"file_path": filename, "language": "Unknown"})
     def display_file(self, file_path):
         self.file_display.clear()
         file_extension = file_path.split('.')[-1].lower()
