@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QLineEdit, QPushButton, QHBoxLayout, QScrollBar, QProgressBar
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QLineEdit, QPushButton, QHBoxLayout, QScrollBar, QProgressBar, QLabel
 from PyQt6.QtGui import QTextCursor, QColor, QTextCharFormat, QImage, QPixmap
 from PyQt6.QtCore import Qt, QTimer
 
@@ -9,6 +9,8 @@ class UIManager(QWidget):
         self.setup_progress_bar()
 
     def setup_ui(self):
+        self.api_key_label = QLabel("API Key: Not Set")
+        self.layout().addWidget(self.api_key_label)
         layout = QVBoxLayout()
         self.chat_display = QTextEdit()
         self.chat_display.setReadOnly(True)
