@@ -89,11 +89,13 @@ class ChatWidget(QWidget):
     def handle_interpreter_output(self, response):
         if 'content' in response:
             if response['type'] == MessageTypes.MESSAGE:
-                self.append_message(response['role'], response['content'])
+                content = self.format_content_as_sentences(response['content'])
+                self.append_message(response['role'], content)
             elif response['type'] == MessageTypes.CODE:
                 self.append_code(response['content'], response.get('language', 'python'))
             elif response['type'] == MessageTypes.CONSOLE:
-                self.append_console_output(response['content'])
+                content = self.format_content_as_sentences(response['content'])
+                self.append_console_output(content)
             else:
                 logger.error(f"Unexpected response format: {response}")
         else:
@@ -101,25 +103,30 @@ class ChatWidget(QWidget):
         
         self.message_processed.emit(response)
 
+    def format_content_as_sentences(self, content):
+        sentences = content.split('. ')
+        return '. '.join(sentence.strip() for sentence in sentences if sentence.strip())
+
 
     def append_message(self, sender, content):
         format = QTextCharFormat()
-
-
-
 
         if sender == "User":
             format.setForeground(QColor("blue"))
         elif sender == "System":
             format.setForeground(QColor("green"))
         else:
-
-
             format.setForeground(QColor("red"))
         
         cursor = self.chat_display.textCursor()
         cursor.movePosition(QTextCursor.MoveOperation.End)
-        cursor.insertText(f"{sender}: {content}\n\n", format)
+        cursor.insertText(f"{sender}:\n", format)
+        
+        for sentence in content.split('\n'):
+            if sentence.strip():
+                cursor.insertText(f"  {sentence.strip()}\n", format)
+        
+        cursor.insertText("\n")
         self.chat_display.setTextCursor(cursor)
         self.chat_display.ensureCursorVisible()
 
@@ -143,7 +150,10 @@ class ChatWidget(QWidget):
         format.setForeground(QColor("gray"))
         
         cursor.insertText("Console Output:\n", format)
-        cursor.insertText(f"{output}\n\n")
+        for line in output.split('\n'):
+            if line.strip():
+                cursor.insertText(f"  {line.strip()}\n", format)
+        cursor.insertText("\n")
         self.chat_display.setTextCursor(cursor)
         self.chat_display.ensureCursorVisible()
 
