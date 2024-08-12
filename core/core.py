@@ -9,7 +9,7 @@ import time
 from datetime import datetime
 from queue import Queue
 
-from .llm import llm
+from .llm.llm import LLM
 from .computer.computer import Computer
 from .default_system_message import default_system_message
 from .respond import respond
