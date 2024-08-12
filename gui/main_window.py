@@ -107,7 +107,10 @@ class MainWindow(QMainWindow):
         config['default_model'] = model
         self.config_manager.save_config(config)
         self.interpreter.llm.model = model
-    def connect_components(self):
+    def handle_file_upload(self, file_path, file_name):
+        current_chat = self.chat_stack.currentWidget()
+        if current_chat:
+            current_chat.handle_file_upload(file_path, file_name)
         self.file_list_widget.file_uploaded.connect(self.handle_file_upload)
         self.file_list_widget.file_selected.connect(self.display_file)
         self.chat_list.currentRowChanged.connect(self.switch_chat)
