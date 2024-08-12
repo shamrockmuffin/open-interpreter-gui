@@ -88,7 +88,7 @@ class MainWindow(QMainWindow):
         center_layout.addWidget(self.ui_manager)
 
     def create_new_chat(self):
-        new_chat = ChatWidget(self.interpreter)
+        new_chat = ChatWidget(self.interpreter, self.message_handler, self.file_list_widget, self.ui_manager)
         self.chat_widgets.append(new_chat)
         self.chat_stack.addWidget(new_chat)
         self.chat_stack.setCurrentWidget(new_chat)

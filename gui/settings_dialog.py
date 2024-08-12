@@ -15,17 +15,11 @@ class SettingsDialog(QDialog):
         self.model_selector.addItems(self.config_manager.load_config()['available_models'])
         layout.addWidget(QLabel("Model:"))
         layout.addWidget(self.model_selector)
-        layout.addWidget(QLabel("Available Language Models:"))
-        self.model_checkboxes = {}
-        for model in ["gpt-4-turbo", "gpt-3.5-turbo", "claude-2", "palm-2"]:
-            checkbox = QCheckBox(model)
-            self.model_checkboxes[model] = checkbox
-            layout.addWidget(checkbox)
 
         # Default Model selector
         layout.addWidget(QLabel("Default Language Model:"))
         self.default_model_selector = QComboBox()
-        self.default_model_selector.addItems(["gpt-4-turbo", "gpt-3.5-turbo", "claude-2", "palm-2"])
+        self.default_model_selector.addItems(self.config_manager.load_config()['available_models'])
         layout.addWidget(self.default_model_selector)
 
         # Context Window
