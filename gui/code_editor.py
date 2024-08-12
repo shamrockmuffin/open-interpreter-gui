@@ -116,26 +116,35 @@ class CodeEditor(QWidget):
             self.chat_widget.append_message('System', f"File saved as: {file_path}")
 
     def open_file(self):
-        file_path, _ = QFileDialog.getOpenFileName(self, "Open File")
-        if file_path:
-            with open(file_path, 'r') as f:
+    file_path, _ = QFileDialog.getOpenFileName(self, "Open File")
+    if file_path:
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
                 file_content = f.read()
-            self.editor.setText(file_content)
-            self.current_file = file_path
-            self.chat_widget.append_message('System', f"File opened: {file_path}")
-            
-            # Determine the language based on file extension
-            extension = file_path.split('.')[-1].lower()
-            if extension == 'py':
-                self.language_selector.setCurrentText("python")
-            elif extension == 'js':
-                self.language_selector.setCurrentText("javascript")
-            elif extension == 'html':
-                self.language_selector.setCurrentText("html")
-            else:
-                self.language_selector.setCurrentText("shell")
-            
-            self.on_content_changed()
+        except UnicodeDecodeError:
+            try:
+                with open(file_path, 'r', encoding='latin-1') as f:
+                    file_content = f.read()
+            except Exception as e:
+                self.chat_widget.append_message('System', f"Failed to open file: {str(e)}")
+                return
+        self.editor.setText(file_content)
+        self.current_file = file_path
+        self.chat_widget.append_message('System', f"File opened: {file_path}")
+        
+        # Determine the language based on file extension
+        extension = file_path.split('.')[-1].lower()
+        if extension == 'py':
+            self.language_selector.setCurrentText("python")
+        elif extension == 'js':
+            self.language_selector.setCurrentText("javascript")
+        elif extension == 'html':
+            self.language_selector.setCurrentText("html")
+        else:
+            self.language_selector.setCurrentText("shell")
+        
+        self.on_content_changed()
+
 
     def get_current_content(self):
         return {
