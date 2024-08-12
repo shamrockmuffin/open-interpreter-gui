@@ -117,13 +117,6 @@ class MainWindow(QMainWindow):
         current_chat = self.chat_stack.currentWidget()
         if current_chat:
             current_chat.handle_file_upload(file_path, file_name)
-    def handle_file_upload(self, file_path, file_name):
-        current_chat = self.chat_stack.currentWidget()
-        if current_chat:
-            current_chat.handle_file_upload(file_path, file_name)
-        self.file_list_widget.file_uploaded.connect(self.handle_file_upload)
-        self.file_list_widget.file_selected.connect(self.display_file)
-        self.chat_list.currentRowChanged.connect(self.switch_chat)
 
     @pyqtSlot(str)
     def process_message(self, message):
@@ -139,7 +132,9 @@ class MainWindow(QMainWindow):
             self.chat_stack.setCurrentIndex(index)
 
     def upload_file(self):
-        self.file_list_widget.upload_file()
+        file_path, file_name = self.file_list_widget.upload_file()
+        if file_path and file_name:
+            self.handle_file_upload(file_path, file_name)
 
     def handle_file_operation(self, operation, filename, content):
         self.script_display.setText(f"{operation} - {filename}:\n{content}\n")
