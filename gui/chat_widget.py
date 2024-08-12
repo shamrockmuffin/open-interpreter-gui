@@ -2,44 +2,41 @@
 
 
 
-from PyQt6.QtWidgets import QWidget, QTextCursor, QTextCharFormat
+from PyQt6.QtWidgets import QWidget, QTextCursor, QTextCharFormat, QVBoxLayout, QTextEdit, QLineEdit, QPushButton
 from PyQt6.QtCore import pyqtSignal, QThread, Qt
 from PyQt6.QtGui import QColor, QImage, QPixmap
 import logging
-
+from .interpreter_thread import InterpreterThread
+from .constants import Colors, MessageTypes, Roles
 
 logger = logging.getLogger(__name__)
 
-class InterpreterThread(QThread):
-    output_received = pyqtSignal(dict)
-
-    def __init__(self, message_handler, message):
-        super().__init__()
-        self.message_handler = message_handler
-        self.message = message
-
-    def run(self):
-        for response in self.message_handler.process_message(self.message):
-            self.output_received.emit(response)
-
 class ChatWidget(QWidget):
-
     file_operation_occurred = pyqtSignal(str, str, str)
+    message_processed = pyqtSignal(dict)
 
     def __init__(self, interpreter):
         super().__init__()
         self.interpreter = interpreter
-
-
-
         self.file_list_widget = None
         self.main_window = None
         self.setup_ui()
         self.setup_connections()
+        self.interpreter_thread = None
 
     def setup_ui(self):
-        # Setup UI components here
-        pass
+        layout = QVBoxLayout()
+        self.chat_display = QTextEdit()
+        self.chat_display.setReadOnly(True)
+        layout.addWidget(self.chat_display)
+
+        self.input_field = QLineEdit()
+        layout.addWidget(self.input_field)
+
+        self.send_button = QPushButton("Send")
+        layout.addWidget(self.send_button)
+
+        self.setLayout(layout)
 
     def setup_connections(self):
 
@@ -75,22 +72,14 @@ class ChatWidget(QWidget):
 
 
     def handle_interpreter_output(self, response):
-        if response['type'] == 'message':
-            if response.get('start', False):
-                self.current_message = {"role": "AI", "content": ""}
-            self.current_message["content"] += response.get('content', '')
-            if response.get('end', False):
-                self.append_message(self.current_message["role"], self.current_message["content"])
-                self.current_message = {"role": "", "content": ""}
-        elif response['type'] == 'code':
-            if response.get('start', False):
-                self.current_message = {"role": "AI", "content": "", "language": response.get('language', 'python')}
-            self.current_message["content"] += response.get('content', '')
-            if response.get('end', False):
-                self.append_code(self.current_message["content"], self.current_message["language"])
-                self.current_message = {"role": "", "content": ""}
-        elif response['type'] == 'console' and response.get('format') == 'output':
-            self.append_console_output(response.get('content', ''))
+        if response['type'] == MessageTypes.MESSAGE:
+            self.append_message(response['role'], response['content'])
+        elif response['type'] == MessageTypes.CODE:
+            self.append_code(response['content'], response.get('language', 'python'))
+        elif response['type'] == MessageTypes.CONSOLE:
+            self.append_console_output(response['content'])
+        
+        self.message_processed.emit(response)
 
 
     def append_message(self, sender, content):

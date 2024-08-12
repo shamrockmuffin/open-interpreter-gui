@@ -1,32 +1,30 @@
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QComboBox, QPushButton
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QComboBox, QPushButton, QLineEdit
 
 class SettingsDialog(QDialog):
-    def __init__(self, interpreter):
+    def __init__(self, interpreter, config_manager):
         super().__init__()
         self.interpreter = interpreter
+        self.config_manager = config_manager
         self.setWindowTitle("Settings")
-        self.setGeometry(300, 300, 400, 350)  # Adjust size for additional fields
+        self.setGeometry(300, 300, 400, 350)
 
         layout = QVBoxLayout()
 
         # Model selector
         layout.addWidget(QLabel("Select Language Model:"))
         self.model_selector = QComboBox()
-        self.model_selector.addItems(["gpt-4-turbo", "gpt-4o", "gpt-4o-mini"])  # Update model list from config
+        self.model_selector.addItems(["gpt-4-turbo", "gpt-4o", "gpt-4o-mini"])
         layout.addWidget(self.model_selector)
-        #Update Context Window for Selected Model
+
+        # Context Window
         layout.addWidget(QLabel("Context Window:"))
-        self.context_window = QComboBox()
-        self.context_window.addItems(["1000","25000","50000","100000"])
+        self.context_window = QLineEdit()
         layout.addWidget(self.context_window)
-        #Update Temperature for Selected Model
+
+        # Temperature
         layout.addWidget(QLabel("Temperature:"))
-        self.temperature = QComboBox()
-        self.temperature.addItems(["0.1","0.4","0.7"])
+        self.temperature = QLineEdit()
         layout.addWidget(self.temperature)
-       
-
-
 
         # Save button
         save_button = QPushButton("Save")
@@ -34,15 +32,19 @@ class SettingsDialog(QDialog):
         layout.addWidget(save_button)
 
         self.setLayout(layout)
+        self.load_current_settings()
+
+    def load_current_settings(self):
+        config = self.config_manager.load_config()
+        self.model_selector.setCurrentText(config.get('model', 'gpt-4-turbo'))
+        self.context_window.setText(str(config.get('context_window', 25000)))
+        self.temperature.setText(str(config.get('temperature', 0.7)))
 
     def save_settings(self):
-        selected_model = self.model_selector.currentText()
-        context_window = self.context_window.currentText()
-        temperature = self.temperature.currentText()
-
-        # Update settings in interpreter
-        self.interpreter.llm.model = selected_model
-        self.interpreter.llm.context_length = int(context_window)
-        self.interpreter.llm.temperature = float(temperature)
-
+        config = {
+            'model': self.model_selector.currentText(),
+            'context_window': int(self.context_window.text()),
+            'temperature': float(self.temperature.text())
+        }
+        self.config_manager.save_config(config)
         self.accept()

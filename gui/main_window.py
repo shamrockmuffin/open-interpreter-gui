@@ -7,6 +7,8 @@ from .chat_widget import ChatWidget
 from .file_list_widget import FileListWidget
 from .settings_dialog import SettingsDialog
 from .file_display_widget import FileDisplayWidget
+from .script_display_widget import ScriptDisplayWidget
+from .config_manager import ConfigManager
 
 class MainWindow(QMainWindow):
     def __init__(self, interpreter):
@@ -18,11 +20,14 @@ class MainWindow(QMainWindow):
         self.chat_widget = None
         self.file_list_widget = None
         self.file_display = None
+        self.script_display = None
+        self.config_manager = ConfigManager()
 
         self.init_ui()
         self.create_menu_bar()
         self.create_status_bar()
         self.connect_components()
+        self.load_settings()
 
     def init_ui(self):
         main_widget = QWidget()
@@ -64,6 +69,7 @@ class MainWindow(QMainWindow):
         self.file_list_widget.file_uploaded.connect(self.chat_widget.handle_file_upload)
         self.file_list_widget.file_selected.connect(self.display_file)
         self.chat_widget.file_operation_occurred.connect(self.script_display.display_file_operation)
+        self.interpreter.file_operation.connect(self.handle_file_operation)
     def display_file(self, file_path):
         self.file_display.clear()
         file_extension = file_path.split('.')[-1].lower()
@@ -124,8 +130,22 @@ class MainWindow(QMainWindow):
             file.write(chat_history)
 
     def open_settings(self):
-        settings_dialog = SettingsDialog(self.interpreter)
-        settings_dialog.exec()
+        settings_dialog = SettingsDialog(self.interpreter, self.config_manager)
+        if settings_dialog.exec():
+            self.apply_settings()
+
+    def apply_settings(self):
+        config = self.config_manager.load_config()
+        self.interpreter.llm.model = config.get('model', 'gpt-4-turbo')
+        self.interpreter.llm.context_length = config.get('context_window', 25000)
+        self.interpreter.llm.temperature = config.get('temperature', 0.7)
+
+    def load_settings(self):
+        self.apply_settings()
+
+    def handle_file_operation(self, operation, filename, content):
+        self.script_display.display_file_operation(operation, filename, content)
+        self.file_list_widget.refresh_file_list()
 
     def create_status_bar(self):
         self.statusBar().showMessage("Ready")

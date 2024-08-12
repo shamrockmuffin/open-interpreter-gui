@@ -52,3 +52,8 @@ class FileListWidget(QWidget):
 
     def clear_list(self):
         self.file_list.clear()
+
+    def refresh_file_list(self):
+        self.clear_list()
+        for file_path in self.interpreter.workspace_manager.get_files():
+            self.add_file_to_list(file_path)
