@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QComboBox, QHBoxLayout, QFileDialog
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QComboBox, QHBoxLayout, QFileDialog, QMessageBox
 from PyQt6.QtGui import QFont, QColor
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.Qsci import QsciScintilla, QsciLexerPython, QsciLexerJavaScript, QsciLexerHTML, QsciLexerBash
@@ -58,6 +58,11 @@ class CodeEditor(QWidget):
         self.editor.setMarginsForegroundColor(QColor("#ff888888"))
         self.editor.textChanged.connect(self.on_content_changed)
 
+        # Enable auto-indentation
+        self.editor.setAutoIndent(True)
+        self.editor.setIndentationsUseTabs(False)
+        self.editor.setIndentationWidth(4)
+
         # Set up Python lexer by default
         self.set_lexer("python")
 
@@ -86,36 +91,45 @@ class CodeEditor(QWidget):
     def run_code(self):
         code = self.editor.text()
         language = self.language_selector.currentText()
-        result = self.interpreter.run_code(language, code)
+        try:
+            result = self.interpreter.run_code(language, code)
 
-        if isinstance(result, list):
-            for item in result:
-                if item['type'] == 'console':
-                    self.chat_widget.append_console_output(item.get('content', ''))
-                elif item['type'] == 'code':
-                    self.chat_widget.append_code(item.get('content', ''), language)
-                else:
-                    self.chat_widget.append_message('AI', item.get('content', ''))
-            self.chat_widget.append_message('AI', "Code execution complete.")
-        
-        # Display the code run by the interpreter in markdown format
-        self.chat_widget.append_code(f"```{language}\n{code}\n```", language)
+            if isinstance(result, list):
+                for item in result:
+                    if item['type'] == 'console':
+                        self.chat_widget.append_console_output(item.get('content', ''))
+                    elif item['type'] == 'code':
+                        self.chat_widget.append_code(item.get('content', ''), language)
+                    else:
+                        self.chat_widget.append_message('AI', item.get('content', ''))
+                self.chat_widget.append_message('AI', "Code execution complete.")
+            
+            # Display the code run by the interpreter in markdown format
+            self.chat_widget.append_code(f"```{language}\n{code}\n```", language)
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"An error occurred while running the code: {str(e)}")
 
     def save_file(self):
         if self.current_file:
-            with open(self.current_file, 'w') as f:
-                f.write(self.editor.text())
-            self.chat_widget.append_message('System', f"File saved: {self.current_file}")
+            try:
+                with open(self.current_file, 'w', encoding='utf-8') as f:
+                    f.write(self.editor.text())
+                self.chat_widget.append_message('System', f"File saved: {self.current_file}")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to save file: {str(e)}")
         else:
             self.save_file_as()
 
     def save_file_as(self):
         file_path, _ = QFileDialog.getSaveFileName(self, "Save File")
         if file_path:
-            with open(file_path, 'w') as f:
-                f.write(self.editor.text())
-            self.current_file = file_path
-            self.chat_widget.append_message('System', f"File saved as: {file_path}")
+            try:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(self.editor.text())
+                self.current_file = file_path
+                self.chat_widget.append_message('System', f"File saved as: {file_path}")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to save file: {str(e)}")
 
     def open_file(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "Open File")
@@ -128,7 +142,7 @@ class CodeEditor(QWidget):
                     with open(file_path, 'r', encoding='latin-1') as f:
                         file_content = f.read()
                 except Exception as e:
-                    self.chat_widget.append_message('System', f"Failed to open file: {str(e)}")
+                    QMessageBox.critical(self, "Error", f"Failed to open file: {str(e)}")
                     return
             self.editor.setText(file_content)
             self.current_file = file_path
@@ -146,7 +160,6 @@ class CodeEditor(QWidget):
                 self.language_selector.setCurrentText("shell")
             
             self.on_content_changed()
-
 
     def get_current_content(self):
         return {
@@ -166,3 +179,9 @@ class CodeEditor(QWidget):
         file_path, _ = QFileDialog.getOpenFileName(self, "Upload Media File", "", "Media Files (*.png *.jpg *.jpeg *.gif *.bmp *.mp3 *.wav *.mp4 *.avi *.mov)")
         if file_path:
             self.chat_widget.handle_media_upload(file_path)
+
+    def clear_editor(self):
+        self.editor.clear()
+        self.current_file = None
+        self.language_selector.setCurrentText("python")
+        self.on_content_changed()

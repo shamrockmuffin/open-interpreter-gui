@@ -1,5 +1,5 @@
 import os
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QLineEdit, QPushButton, QHBoxLayout
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QLineEdit, QPushButton, QHBoxLayout, QScrollBar
 from PyQt6.QtCore import pyqtSignal, Qt, QThread
 from PyQt6.QtGui import QTextCursor, QColor, QTextCharFormat, QImage, QPixmap
 
@@ -30,6 +30,7 @@ class ChatWidget(QWidget):
         # Chat display
         self.chat_display = QTextEdit()
         self.chat_display.setReadOnly(True)
+        self.chat_display.setVerticalScrollBar(QScrollBar())
         layout.addWidget(self.chat_display)
 
         # Input area
@@ -171,3 +172,7 @@ class ChatWidget(QWidget):
             self.chat_display.append("")  # Add a new line after the image
         else:
             self.append_message("System", f"Failed to load image: {file_path}")
+
+    def clear_chat(self):
+        self.chat_display.clear()
+        self.interpreter.messages = []

@@ -7,6 +7,7 @@ from PyQt6.QtGui import QIcon
 
 def main():
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon('path/to/your/icon.png'))  # Add an icon for your application
 
     parser = argparse.ArgumentParser(description="Open Interpreter GUI")
     parser.add_argument("--model", help="Specify the language model to use")
