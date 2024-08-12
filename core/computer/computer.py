@@ -41,7 +41,7 @@ class Computer:
         self.docs = Docs(self)
         self.ai = Ai(self)
         self.files = Files(self)
-        from .skills.skills import Skills
+        from .skills import Skills
         self.skills = Skills(self)  # Initialize the skills attribute
 
         self.emit_images = True
