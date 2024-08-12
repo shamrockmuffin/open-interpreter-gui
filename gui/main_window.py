@@ -134,7 +134,7 @@ class MainWindow(QMainWindow):
             self.chat_stack.setCurrentIndex(index)
 
     def upload_file(self):
-        self.file_list_widget.upload_file()
+        file_path, file_name = self.file_list_widget.upload_file()
         current_chat = self.chat_stack.currentWidget()
         if current_chat:
             current_chat.handle_file_upload(file_path, file_name)
