@@ -96,8 +96,10 @@ class CodeEditor(QWidget):
                     self.chat_widget.append_code(item.get('content', ''), language)
                 else:
                     self.chat_widget.append_message('AI', item.get('content', ''))
-        else:
             self.chat_widget.append_message('AI', "Code execution complete.")
+        
+        # Display the code run by the interpreter in markdown format
+        self.chat_widget.append_code(f"```{language}\n{code}\n```", language)
 
     def save_file(self):
         if self.current_file:

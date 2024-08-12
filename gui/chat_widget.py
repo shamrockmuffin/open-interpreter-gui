@@ -125,8 +125,8 @@ class ChatWidget(QWidget):
         format = QTextCharFormat()
         format.setForeground(QColor("purple"))
         
-        cursor.insertText(f"Code ({language}):\n", format)
-        cursor.insertText(f"{code}\n\n")
+        cursor.insertText(f"Code ({language}):\n```{language}\n", format)
+        cursor.insertText(f"{code}\n```\n\n")
         self.chat_display.setTextCursor(cursor)
         self.chat_display.ensureCursorVisible()
 
