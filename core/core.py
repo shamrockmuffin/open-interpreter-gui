@@ -213,7 +213,7 @@ class OpenInterpreter:
             self.responding = False
             return self.messages[self.last_messages_count:]
 
-        except Exception as e:
+        except Exception:
             self.responding = False
             raise
 
@@ -247,6 +247,10 @@ class OpenInterpreter:
             return content
         except Exception as e:
             return f"Error reading file: {str(e)}"
+        # This block seems to be misplaced or unnecessary. 
+        # If it's needed, it should be part of a method. 
+        # For now, we'll comment it out to avoid undefined variable errors.
+        """
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "HTTP-Referer": self.site_url,
@@ -260,6 +264,7 @@ class OpenInterpreter:
         response = requests.post(self.api_base, headers=headers, json=data)
         response_data = response.json()
         return response_data
+        """
         try:
             self.responding = True
             if self.anonymous_telemetry:
