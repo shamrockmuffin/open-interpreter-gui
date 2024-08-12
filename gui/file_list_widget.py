@@ -1,15 +1,15 @@
 import os
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem, QFileDialog
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QListWidget, QListWidgetItem, QFileDialog, QHBoxLayout
 from PyQt6.QtCore import pyqtSignal, Qt
 
 class FileListWidget(QWidget):
     file_uploaded = pyqtSignal(str, str)  # Emit both file path and file name
     file_selected = pyqtSignal(str)  # Emit file path when selected
 
-    def __init__(self, interpreter, chat_widget):
+    def __init__(self, interpreter, chat_widgets):
         super().__init__()
         self.interpreter = interpreter
-        self.chat_widget = chat_widget
+        self.chat_widgets = chat_widgets
         
         layout = QVBoxLayout()
 
@@ -18,10 +18,20 @@ class FileListWidget(QWidget):
         self.file_list.itemClicked.connect(self.on_file_selected)
         layout.addWidget(self.file_list)
 
+        # Buttons layout
+        button_layout = QHBoxLayout()
+
         # Upload button
         self.upload_button = QPushButton("Upload File")
         self.upload_button.clicked.connect(self.upload_file)
-        layout.addWidget(self.upload_button)
+        button_layout.addWidget(self.upload_button)
+
+        # Download button
+        self.download_button = QPushButton("Download File")
+        self.download_button.clicked.connect(self.download_file)
+        button_layout.addWidget(self.download_button)
+
+        layout.addLayout(button_layout)
 
         self.setLayout(layout)
 

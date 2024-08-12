@@ -1,6 +1,8 @@
 import os
 from datetime import datetime
-from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QMenuBar, QStatusBar, QSplitter, QMessageBox
+from PyQt6.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, 
+                             QMenuBar, QStatusBar, QSplitter, QMessageBox, 
+                             QListWidget, QStackedWidget, QPushButton)
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtCore import Qt, pyqtSlot
 from gui.chat_widget import ChatWidget
@@ -18,7 +20,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Open Interpreter")
         self.setGeometry(100, 100, 1200, 800)
 
-        self.chat_widget = None
+        self.chat_widgets = []
         self.file_list_widget = None
         self.file_display = None
         self.script_display = None
@@ -35,36 +37,57 @@ class MainWindow(QMainWindow):
         main_widget = QWidget()
         main_layout = QHBoxLayout(main_widget)
 
-        # Create a splitter for resizable panels
-        splitter = QSplitter(Qt.Orientation.Horizontal)
+        # Left panel: Model selection and chat list
+        left_panel = QWidget()
+        left_layout = QVBoxLayout(left_panel)
+        
+        self.model_selector = QListWidget()
+        self.model_selector.addItems(["GPT-4", "GPT-3.5", "Claude", "PaLM"])
+        left_layout.addWidget(self.model_selector)
+        
+        self.chat_list = QListWidget()
+        left_layout.addWidget(self.chat_list)
+        
+        new_chat_button = QPushButton("New Chat")
+        new_chat_button.clicked.connect(self.create_new_chat)
+        left_layout.addWidget(new_chat_button)
 
-        # Left panel: Chat widget
-        self.chat_widget = ChatWidget(self.interpreter)
-        splitter.addWidget(self.chat_widget)
+        # Center panel: Chat widget and code output
+        center_panel = QWidget()
+        center_layout = QVBoxLayout(center_panel)
+        
+        self.chat_stack = QStackedWidget()
+        center_layout.addWidget(self.chat_stack)
+        
+        self.script_display = ScriptDisplayWidget()
+        center_layout.addWidget(self.script_display)
 
-        # Right panel: File list, File display, and Script display
+        # Right panel: File list and file display
         right_panel = QWidget()
         right_layout = QVBoxLayout(right_panel)
         
-        top_right_splitter = QSplitter(Qt.Orientation.Vertical)
-        self.file_list_widget = FileListWidget(self.interpreter, self.chat_widget)
+        self.file_list_widget = FileListWidget(self.interpreter, self.chat_widgets)
+        right_layout.addWidget(self.file_list_widget)
+        
         self.file_display = FileDisplayWidget()
-        top_right_splitter.addWidget(self.file_list_widget)
-        top_right_splitter.addWidget(self.file_display)
-        
-        self.script_display = ScriptDisplayWidget()
-        
-        right_layout.addWidget(top_right_splitter, 2)
-        right_layout.addWidget(self.script_display, 1)
-        
-        right_panel.setLayout(right_layout)
-        splitter.addWidget(right_panel)
+        right_layout.addWidget(self.file_display)
 
-        splitter.setStretchFactor(0, 1)
-        splitter.setStretchFactor(1, 1)
+        # Add panels to main layout
+        main_layout.addWidget(left_panel, 1)
+        main_layout.addWidget(center_panel, 2)
+        main_layout.addWidget(right_panel, 1)
 
-        main_layout.addWidget(splitter)
         self.setCentralWidget(main_widget)
+
+    def create_new_chat(self):
+        new_chat = ChatWidget(self.interpreter)
+        self.chat_widgets.append(new_chat)
+        self.chat_stack.addWidget(new_chat)
+        self.chat_stack.setCurrentWidget(new_chat)
+        
+        chat_item = f"Chat {len(self.chat_widgets)}"
+        self.chat_list.addItem(chat_item)
+        self.chat_list.setCurrentRow(self.chat_list.count() - 1)
     def connect_components(self):
         self.chat_widget.set_file_list_widget(self.file_list_widget)
         self.chat_widget.set_main_window(self)

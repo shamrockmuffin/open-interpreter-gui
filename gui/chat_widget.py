@@ -2,7 +2,7 @@
 
 
 
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QLineEdit, QPushButton
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QLineEdit, QPushButton, QSplitter
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtGui import QColor, QImage, QPixmap, QTextCursor, QTextCharFormat
 import logging
@@ -27,9 +27,19 @@ class ChatWidget(QWidget):
 
     def setup_ui(self):
         layout = QVBoxLayout()
+        
+        # Create a splitter for chat display and code output
+        splitter = QSplitter(Qt.Orientation.Vertical)
+        
         self.chat_display = QTextEdit()
         self.chat_display.setReadOnly(True)
-        layout.addWidget(self.chat_display)
+        splitter.addWidget(self.chat_display)
+        
+        self.code_output = QTextEdit()
+        self.code_output.setReadOnly(True)
+        splitter.addWidget(self.code_output)
+        
+        layout.addWidget(splitter)
 
         self.input_field = QLineEdit()
         layout.addWidget(self.input_field)

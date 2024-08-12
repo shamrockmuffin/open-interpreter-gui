@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QComboBox, QPushButton, QLineEdit
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QComboBox, QPushButton, QLineEdit, QCheckBox
 
 class SettingsDialog(QDialog):
     def __init__(self, interpreter, config_manager):
@@ -6,15 +6,23 @@ class SettingsDialog(QDialog):
         self.interpreter = interpreter
         self.config_manager = config_manager
         self.setWindowTitle("Settings")
-        self.setGeometry(300, 300, 400, 350)
+        self.setGeometry(300, 300, 400, 450)
 
         layout = QVBoxLayout()
 
         # Model selector
-        layout.addWidget(QLabel("Select Language Model:"))
-        self.model_selector = QComboBox()
-        self.model_selector.addItems(["gpt-4-turbo", "gpt-4o", "gpt-4o-mini"])
-        layout.addWidget(self.model_selector)
+        layout.addWidget(QLabel("Available Language Models:"))
+        self.model_checkboxes = {}
+        for model in ["gpt-4-turbo", "gpt-3.5-turbo", "claude-2", "palm-2"]:
+            checkbox = QCheckBox(model)
+            self.model_checkboxes[model] = checkbox
+            layout.addWidget(checkbox)
+
+        # Default Model selector
+        layout.addWidget(QLabel("Default Language Model:"))
+        self.default_model_selector = QComboBox()
+        self.default_model_selector.addItems(["gpt-4-turbo", "gpt-3.5-turbo", "claude-2", "palm-2"])
+        layout.addWidget(self.default_model_selector)
 
         # Context Window
         layout.addWidget(QLabel("Context Window:"))
