@@ -265,7 +265,7 @@ class OpenInterpreter:
             self.responding = True
             if self.anonymous_telemetry and message is not None:
                 message_type = type(message).__name__  # Only send message type, no content
-                send_telemetry(
+                self.send_telemetry(
                     "started_chat",
                     properties={
                         "in_terminal_interface": self.in_terminal_interface,
@@ -299,7 +299,7 @@ class OpenInterpreter:
             self.responding = False
             if self.anonymous_telemetry and message is not None:
                 message_type = type(message).__name__
-                send_telemetry(
+                self.send_telemetry(
                     "errored",
                     properties={
                         "error": str(e),
