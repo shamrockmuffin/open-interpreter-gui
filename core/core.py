@@ -267,10 +267,8 @@ class OpenInterpreter:
         """
         try:
             self.responding = True
-            if self.anonymous_telemetry:
-                message_type = type(
-                    message
-                ).__name__  # Only send message type, no content
+            if self.anonymous_telemetry and message is not None:
+                message_type = type(message).__name__  # Only send message type, no content
                 send_telemetry(
                     "started_chat",
                     properties={
@@ -303,7 +301,7 @@ class OpenInterpreter:
             # It's fine
         except Exception as e:
             self.responding = False
-            if self.anonymous_telemetry:
+            if self.anonymous_telemetry and message is not None:
                 message_type = type(message).__name__
                 send_telemetry(
                     "errored",
