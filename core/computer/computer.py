@@ -41,6 +41,7 @@ class Computer:
         self.docs = Docs(self)
         self.ai = Ai(self)
         self.files = Files(self)
+        self.skills = None  # Initialize the skills attribute
 
         self.emit_images = True
         self.api_base = "https://api.openinterpreter.com/v0"
