@@ -60,12 +60,22 @@ class MainWindow(QMainWindow):
         new_chat_button.clicked.connect(self.create_new_chat)
         left_layout.addWidget(new_chat_button)
 
-        # Center panel: Chat widget and code output
+        # Center panel: Chat widget, input area, and code output
         center_panel = QWidget()
         center_layout = QVBoxLayout(center_panel)
         
         self.chat_stack = QStackedWidget()
         center_layout.addWidget(self.chat_stack)
+        
+        # Chat input area
+        chat_input_layout = QHBoxLayout()
+        self.chat_input = QTextEdit()
+        self.chat_input.setFixedHeight(50)
+        self.send_button = QPushButton("Send")
+        self.send_button.clicked.connect(self.send_message)
+        chat_input_layout.addWidget(self.chat_input)
+        chat_input_layout.addWidget(self.send_button)
+        center_layout.addLayout(chat_input_layout)
         
         self.script_display = QTextEdit()
         self.script_display.setReadOnly(True)
@@ -231,6 +241,15 @@ class MainWindow(QMainWindow):
 
     def load_settings(self):
         self.apply_settings()
+
+    def send_message(self):
+        message = self.chat_input.toPlainText()
+        if message:
+            current_chat = self.chat_stack.currentWidget()
+            if current_chat:
+                current_chat.append_message("User", message)
+                self.chat_input.clear()
+                self.process_message(message)
 
     def handle_file_operation(self, operation, filename, content):
         self.script_display.display_file_operation(operation, filename, content)
