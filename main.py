@@ -1,6 +1,5 @@
 import logging
 import sys
-import argparse
 import os
 
 # Add the parent directory to the Python path
@@ -8,7 +7,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from PyQt6.QtWidgets import QApplication
 from gui.main_window import MainWindow
 from interpreter import OpenInterpreter
-from PyQt6.QtGui import QIcon
 from gui.message_handler import MessageHandler
 from gui.file_upload_handler import FileUploadHandler
 from gui.ui_manager import UIManager
@@ -32,15 +30,13 @@ def main():
     ui_manager = UIManager()
     chat_widget = ChatWidget(interpreter, message_handler, file_upload_handler, ui_manager)
 
-    # Create and show the main window
+    app = QApplication(sys.argv)
     main_window = MainWindow(interpreter)
     main_window.setCentralWidget(chat_widget)
     main_window.show()
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    main()
     sys.exit(app.exec())
 
+if __name__ == "__main__":
+    main()
 
 
