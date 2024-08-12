@@ -3,6 +3,7 @@ import argparse
 from PyQt6.QtWidgets import QApplication
 from gui.main_window import MainWindow
 from interpreter import OpenInterpreter
+from interpreter import OpenInterpreter
 from PyQt6.QtGui import QIcon
 
 def main():

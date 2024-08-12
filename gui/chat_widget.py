@@ -6,8 +6,8 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QLineEdit, QPushBut
 from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtGui import QColor, QImage, QPixmap, QTextCursor, QTextCharFormat
 import logging
-from .constants import Colors, MessageTypes, Roles
-from .interpreter_thread import InterpreterThread
+from gui.constants import Colors, MessageTypes, Roles
+from gui.interpreter_thread import InterpreterThread
 
 logger = logging.getLogger(__name__)
 
