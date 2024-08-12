@@ -189,6 +189,38 @@ class OpenInterpreter:
         return self.contribute_conversation and not overrides
 
     def chat(self, message=None, display=True, stream=False, blocking=True):
+        # Existing chat method implementation...
+
+    def create_file(self, file_path, content):
+        try:
+            with open(file_path, 'w') as file:
+                file.write(content)
+            return f"File created successfully: {file_path}"
+        except Exception as e:
+            return f"Error creating file: {str(e)}"
+
+    def modify_file(self, file_path, content):
+        try:
+            with open(file_path, 'w') as file:
+                file.write(content)
+            return f"File modified successfully: {file_path}"
+        except Exception as e:
+            return f"Error modifying file: {str(e)}"
+
+    def delete_file(self, file_path):
+        try:
+            os.remove(file_path)
+            return f"File deleted successfully: {file_path}"
+        except Exception as e:
+            return f"Error deleting file: {str(e)}"
+
+    def read_file(self, file_path):
+        try:
+            with open(file_path, 'r') as file:
+                content = file.read()
+            return content
+        except Exception as e:
+            return f"Error reading file: {str(e)}"
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "HTTP-Referer": self.site_url,
