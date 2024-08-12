@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 from PyQt6.QtWidgets import (QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, 
                              QMenuBar, QStatusBar, QSplitter, QMessageBox, 
-                             QListWidget, QStackedWidget, QPushButton)
+                             QListWidget, QStackedWidget, QPushButton, QComboBox)
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtCore import Qt, pyqtSlot
 from gui.chat_widget import ChatWidget
@@ -41,8 +41,10 @@ class MainWindow(QMainWindow):
         left_panel = QWidget()
         left_layout = QVBoxLayout(left_panel)
         
-        self.model_selector = QListWidget()
-        self.model_selector.addItems(["GPT-4", "GPT-3.5", "Claude", "PaLM"])
+        self.model_selector = QComboBox()
+        self.model_selector.addItems(self.config_manager.load_config()['available_models'])
+        self.model_selector.setCurrentText(self.config_manager.load_config()['default_model'])
+        self.model_selector.currentTextChanged.connect(self.on_model_changed)
         left_layout.addWidget(self.model_selector)
         
         self.chat_list = QListWidget()
@@ -88,22 +90,40 @@ class MainWindow(QMainWindow):
         chat_item = f"Chat {len(self.chat_widgets)}"
         self.chat_list.addItem(chat_item)
         self.chat_list.setCurrentRow(self.chat_list.count() - 1)
+        
+        new_chat.set_file_list_widget(self.file_list_widget)
+        new_chat.set_main_window(self)
+        new_chat.file_operation_occurred.connect(self.script_display.display_file_operation)
+        new_chat.message_sent.connect(self.process_message)
+
+    def on_model_changed(self, model):
+        config = self.config_manager.load_config()
+        config['default_model'] = model
+        self.config_manager.save_config(config)
+        self.interpreter.llm.model = model
     def connect_components(self):
-        self.chat_widget.set_file_list_widget(self.file_list_widget)
-        self.chat_widget.set_main_window(self)
-        self.file_list_widget.file_uploaded.connect(self.chat_widget.handle_file_upload)
+        self.file_list_widget.file_uploaded.connect(self.handle_file_upload)
         self.file_list_widget.file_selected.connect(self.display_file)
-        self.chat_widget.file_operation_occurred.connect(self.script_display.display_file_operation)
         self.interpreter.file_operation.connect(self.handle_file_operation)
-        self.chat_widget.message_sent.connect(self.process_message)
+        self.chat_list.currentRowChanged.connect(self.switch_chat)
 
     @pyqtSlot(str)
     def process_message(self, message):
+        current_chat = self.chat_stack.currentWidget()
         try:
             for response in self.message_handler.process_message(message):
-                self.chat_widget.update_chat(response)
+                current_chat.update_chat(response)
         except Exception as e:
             QMessageBox.critical(self, "Error", f"An error occurred: {str(e)}")
+
+    def switch_chat(self, index):
+        if 0 <= index < self.chat_stack.count():
+            self.chat_stack.setCurrentIndex(index)
+
+    def handle_file_upload(self, file_path, file_name):
+        current_chat = self.chat_stack.currentWidget()
+        if current_chat:
+            current_chat.handle_file_upload(file_path, file_name)
 
     def handle_file_operation(self, operation, filename, content):
         self.script_display.display_file_operation(operation, filename, content)
