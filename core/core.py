@@ -84,7 +84,7 @@ class OpenInterpreter:
             user_message_template="{content}",
             always_apply_user_message_template=False,
             code_output_template="Code output: {content}\n\nWhat does this output mean / what's next (if anything, or are we done)?",
-            empty_code_output_template="The code above was executed on my machine. It produced no text output. what's next (if anything, or are we done?)",
+            empty_code_output_template="The code above was executed on my machine. It produced no text output. what's next (if anything, or are we done)?",
             code_output_sender="user",
             computer=None,
             sync_computer=False,
@@ -103,6 +103,7 @@ class OpenInterpreter:
         self.messages = [] if messages is None else messages
         self.responding = False
         self.last_messages_count = 0
+        self.file_operation = self.file_tracker.file_operation
         # Settings
         self.offline = offline
         self.auto_run = auto_run

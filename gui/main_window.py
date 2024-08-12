@@ -106,7 +106,7 @@ class MainWindow(QMainWindow):
     def connect_components(self):
         self.file_list_widget.file_uploaded.connect(self.handle_file_upload)
         self.file_list_widget.file_selected.connect(self.display_file)
-        self.interpreter.file_operation.connect(self.handle_file_operation)
+        self.interpreter.file_tracker.file_operation.connect(self.handle_file_operation)
         self.chat_list.currentRowChanged.connect(self.switch_chat)
 
     @pyqtSlot(str)
