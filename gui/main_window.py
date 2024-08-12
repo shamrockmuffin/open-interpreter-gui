@@ -1,10 +1,10 @@
-import sys
+import os
+from datetime import datetime
 from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QMenuBar, QStatusBar, QSplitter
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtCore import Qt
 from .chat_widget import ChatWidget
 from .code_editor import CodeEditor
-from .workspace_manager import WorkspaceManager
 from .settings_dialog import SettingsDialog
 
 class MainWindow(QMainWindow):
@@ -14,12 +14,16 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Open Interpreter")
         self.setGeometry(100, 100, 1200, 800)
 
-        self.init_ui()
+        self.chat_widget = None
+        self.code_editor = None
 
-    def init_ui(self):
+        self.init_ui()
         self.create_menu_bar()
         self.create_status_bar()
+        self.code_editor.analysis_complete.connect(self.chat_widget.display_analysis)
+        self.chat_widget.set_code_editor(self.code_editor)
 
+    def init_ui(self):
         main_widget = QWidget()
         main_layout = QHBoxLayout(main_widget)
 
@@ -30,22 +34,10 @@ class MainWindow(QMainWindow):
         self.chat_widget = ChatWidget(self.interpreter)
         splitter.addWidget(self.chat_widget)
 
-        # Right panel: Code editor and Workspace manager
-        right_panel = QWidget()
-        right_layout = QVBoxLayout(right_panel)
-
+        # Right panel: Code editor
         self.code_editor = CodeEditor(self.interpreter, self.chat_widget)
-        self.workspace_manager = WorkspaceManager(self.interpreter)
+        splitter.addWidget(self.code_editor)
 
-        right_splitter = QSplitter(Qt.Orientation.Vertical)
-        right_splitter.addWidget(self.code_editor)
-        right_splitter.addWidget(self.workspace_manager)
-        right_splitter.setStretchFactor(0, 2)  # Give more space to code editor
-        right_splitter.setStretchFactor(1, 1)
-
-        right_layout.addWidget(right_splitter)
-
-        splitter.addWidget(right_panel)
         splitter.setStretchFactor(0, 1)
         splitter.setStretchFactor(1, 1)
 
@@ -57,6 +49,21 @@ class MainWindow(QMainWindow):
 
         # File menu
         file_menu = menu_bar.addMenu("File")
+        
+        open_action = QAction(QIcon(), "Open", self)
+        open_action.triggered.connect(self.code_editor.open_file)
+        file_menu.addAction(open_action)
+
+        save_action = QAction(QIcon(), "Save", self)
+        save_action.triggered.connect(self.code_editor.save_file)
+        file_menu.addAction(save_action)
+
+        save_as_action = QAction(QIcon(), "Save As", self)
+        save_as_action.triggered.connect(self.code_editor.save_file_as)
+        file_menu.addAction(save_as_action)
+
+        file_menu.addSeparator()
+
         exit_action = QAction(QIcon(), "Exit", self)
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
@@ -67,23 +74,25 @@ class MainWindow(QMainWindow):
         settings_action.triggered.connect(self.open_settings)
         edit_menu.addAction(settings_action)
 
-        # View menu
-        view_menu = menu_bar.addMenu("View")
-        toggle_workspace_action = QAction("Toggle Workspace", self)
-        toggle_workspace_action.triggered.connect(self.toggle_workspace)
-        view_menu.addAction(toggle_workspace_action)
+    def closeEvent(self, event):
+        self.save_chat_history()
+        event.accept()
 
-    def open_settings(self):
-        settings_dialog = SettingsDialog(self)
+    def save_chat_history(self):
+        chat_history = self.chat_widget.chat_display.toPlainText()
+        if not chat_history.strip():
+            return
+
+        if not os.path.exists("GUI_chat_history"):
+            os.makedirs("GUI_chat_history")
+
+        timestamp = datetime.now().strftime("chat_%d_%H_%M")
+        file_path = os.path.join("GUI_chat_history", f"{timestamp}.txt")
+
+        with open(file_path, "w", encoding="utf-8") as file:
+            file.write(chat_history)
+        settings_dialog = SettingsDialog(self.interpreter)
         settings_dialog.exec()
 
     def create_status_bar(self):
-        status_bar = QStatusBar()
-       
-    def toggle_workspace(self):
-        if self.workspace_manager.isVisible():
-            self.workspace_manager.hide()
-        else:
-            self.workspace_manager.show()
-        settings_dialog = SettingsDialog(self)
-        settings_dialog.exec()
+        self.statusBar().showMessage("Ready")
