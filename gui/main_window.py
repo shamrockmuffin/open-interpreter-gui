@@ -4,8 +4,9 @@ from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QMen
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtCore import Qt
 from .chat_widget import ChatWidget
-from .code_editor import CodeEditor
+from .file_list_widget import FileListWidget
 from .settings_dialog import SettingsDialog
+from .file_display_widget import FileDisplayWidget
 
 class MainWindow(QMainWindow):
     def __init__(self, interpreter):
@@ -15,7 +16,8 @@ class MainWindow(QMainWindow):
         self.setGeometry(100, 100, 1200, 800)
 
         self.chat_widget = None
-        self.code_editor = None
+        self.file_list_widget = None
+        self.file_display = None
 
         self.init_ui()
         self.create_menu_bar()
@@ -33,20 +35,51 @@ class MainWindow(QMainWindow):
         self.chat_widget = ChatWidget(self.interpreter)
         splitter.addWidget(self.chat_widget)
 
-        # Right panel: Code editor
-        self.code_editor = CodeEditor(self.interpreter, self.chat_widget)
-        splitter.addWidget(self.code_editor)
+        # Right panel: File list, File display, and Script display
+        right_panel = QWidget()
+        right_layout = QVBoxLayout(right_panel)
+        
+        top_right_splitter = QSplitter(Qt.Orientation.Vertical)
+        self.file_list_widget = FileListWidget(self.interpreter, self.chat_widget)
+        self.file_display = FileDisplayWidget()
+        top_right_splitter.addWidget(self.file_list_widget)
+        top_right_splitter.addWidget(self.file_display)
+        
+        self.script_display = ScriptDisplayWidget()
+        
+        right_layout.addWidget(top_right_splitter, 2)
+        right_layout.addWidget(self.script_display, 1)
+        
+        right_panel.setLayout(right_layout)
+        splitter.addWidget(right_panel)
 
         splitter.setStretchFactor(0, 1)
         splitter.setStretchFactor(1, 1)
 
         main_layout.addWidget(splitter)
         self.setCentralWidget(main_widget)
-
     def connect_components(self):
-        self.chat_widget.set_code_editor(self.code_editor)
-        self.code_editor.analysis_complete.connect(self.chat_widget.display_analysis)
-        self.code_editor.content_changed.connect(self.update_status_bar)
+        self.chat_widget.set_file_list_widget(self.file_list_widget)
+        self.chat_widget.set_main_window(self)
+        self.file_list_widget.file_uploaded.connect(self.chat_widget.handle_file_upload)
+        self.file_list_widget.file_selected.connect(self.display_file)
+        self.chat_widget.file_operation_occurred.connect(self.script_display.display_file_operation)
+    def display_file(self, file_path):
+        self.file_display.clear()
+        file_extension = file_path.split('.')[-1].lower()
+        try:
+            if file_extension in ['jpg', 'jpeg', 'png', 'gif']:
+                self.file_display.display_image(file_path)
+            elif file_extension in ['mp3', 'wav']:
+                self.file_display.display_audio(file_path)
+            elif file_extension in ['mp4', 'avi', 'mov']:
+                self.file_display.display_video(file_path)
+            else:
+                with open(file_path, 'r', encoding='utf-8') as file:
+                    content = file.read()
+                self.file_display.display_text(content)
+        except Exception as e:
+            self.file_display.display_error(f"Error displaying file: {str(e)}")
 
     def create_menu_bar(self):
         menu_bar = self.menuBar()
@@ -54,20 +87,10 @@ class MainWindow(QMainWindow):
         # File menu
         file_menu = menu_bar.addMenu("File")
         
-        open_action = QAction(QIcon(), "Open", self)
-        open_action.setShortcut("Ctrl+O")
-        open_action.triggered.connect(self.code_editor.open_file)
-        file_menu.addAction(open_action)
-
-        save_action = QAction(QIcon(), "Save", self)
-        save_action.setShortcut("Ctrl+S")
-        save_action.triggered.connect(self.code_editor.save_file)
-        file_menu.addAction(save_action)
-
-        save_as_action = QAction(QIcon(), "Save As", self)
-        save_as_action.setShortcut("Ctrl+Shift+S")
-        save_as_action.triggered.connect(self.code_editor.save_file_as)
-        file_menu.addAction(save_as_action)
+        upload_action = QAction(QIcon(), "Upload File", self)
+        upload_action.setShortcut("Ctrl+U")
+        upload_action.triggered.connect(self.file_list_widget.upload_file)
+        file_menu.addAction(upload_action)
 
         file_menu.addSeparator()
 

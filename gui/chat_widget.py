@@ -1,64 +1,69 @@
-import os
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QLineEdit, QPushButton, QHBoxLayout, QScrollBar
-from PyQt6.QtCore import pyqtSignal, Qt, QThread
-from PyQt6.QtGui import QTextCursor, QColor, QTextCharFormat, QImage, QPixmap
 
+
+
+
+from PyQt6.QtWidgets import QWidget, QTextCursor, QTextCharFormat
+from PyQt6.QtCore import pyqtSignal, QThread, Qt
+from PyQt6.QtGui import QColor, QImage, QPixmap
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 class InterpreterThread(QThread):
     output_received = pyqtSignal(dict)
 
-    def __init__(self, interpreter, message):
+    def __init__(self, message_handler, message):
         super().__init__()
-        self.interpreter = interpreter
+        self.message_handler = message_handler
         self.message = message
 
     def run(self):
-        for response in self.interpreter.chat(self.message, display=False, stream=True):
+        for response in self.message_handler.process_message(self.message):
             self.output_received.emit(response)
 
 class ChatWidget(QWidget):
-    message_sent = pyqtSignal(str)
+
+    file_operation_occurred = pyqtSignal(str, str, str)
 
     def __init__(self, interpreter):
         super().__init__()
         self.interpreter = interpreter
-        self.current_message = {"role": "", "content": ""}
-        self.code_editor = None  # Will be set later
 
-        layout = QVBoxLayout()
 
-        # Chat display
-        self.chat_display = QTextEdit()
-        self.chat_display.setReadOnly(True)
-        self.chat_display.setVerticalScrollBar(QScrollBar())
-        layout.addWidget(self.chat_display)
 
-        # Input area
-        input_layout = QHBoxLayout()
-        self.input_field = QLineEdit()
+        self.file_list_widget = None
+        self.main_window = None
+        self.setup_ui()
+        self.setup_connections()
+
+    def setup_ui(self):
+        # Setup UI components here
+        pass
+
+    def setup_connections(self):
+
+
+
         self.input_field.returnPressed.connect(self.send_message)
-        input_layout.addWidget(self.input_field)
-
-        self.send_button = QPushButton("Send")
         self.send_button.clicked.connect(self.send_message)
-        input_layout.addWidget(self.send_button)
 
-        layout.addLayout(input_layout)
+    def set_file_list_widget(self, file_list_widget):
+        self.file_list_widget = file_list_widget
 
-        self.setLayout(layout)
-
-        self.message_sent.connect(self.handle_message)
-
-    def set_code_editor(self, code_editor):
-        self.code_editor = code_editor
+    def set_main_window(self, main_window):
+        self.main_window = main_window
 
     def send_message(self):
+
         message = self.input_field.text()
         if message:
+
             self.input_field.clear()
-            self.message_sent.emit(message)
+            self.handle_message(message)
 
     def handle_message(self, message):
+
         self.append_message("User", message)
         self.interpreter.messages.append({
             "role": "user",
@@ -67,23 +72,7 @@ class ChatWidget(QWidget):
         })
         self.process_message(message)
 
-    def process_message(self, message):
-        if message.lower().startswith("analyze this file"):
-            if self.code_editor:
-                file_info = self.code_editor.get_current_content()
-                analysis_message = f"Please analyze this {file_info['language']} file "
-                if file_info['file_path']:
-                    analysis_message += f"('{file_info['file_path']}')"
-                analysis_message += f":\n\n```{file_info['language']}\n{file_info['content']}\n```"
-                self.interpreter_thread = InterpreterThread(self.interpreter, analysis_message)
-            else:
-                self.append_message("System", "No file is currently open in the editor.")
-                return
-        else:
-            self.interpreter_thread = InterpreterThread(self.interpreter, message)
-        
-        self.interpreter_thread.output_received.connect(self.handle_interpreter_output)
-        self.interpreter_thread.start()
+
 
     def handle_interpreter_output(self, response):
         if response['type'] == 'message':
@@ -103,20 +92,25 @@ class ChatWidget(QWidget):
         elif response['type'] == 'console' and response.get('format') == 'output':
             self.append_console_output(response.get('content', ''))
 
+
     def append_message(self, sender, content):
-        cursor = self.chat_display.textCursor()
-        cursor.movePosition(QTextCursor.MoveOperation.End)
-        
         format = QTextCharFormat()
+
+
+
+
         if sender == "User":
             format.setForeground(QColor("blue"))
         elif sender == "System":
             format.setForeground(QColor("green"))
         else:
+
+
             format.setForeground(QColor("red"))
         
-        cursor.insertText(f"{sender}: ", format)
-        cursor.insertText(f"{content}\n\n")
+        cursor = self.chat_display.textCursor()
+        cursor.movePosition(QTextCursor.MoveOperation.End)
+        cursor.insertText(f"{sender}: {content}\n\n", format)
         self.chat_display.setTextCursor(cursor)
         self.chat_display.ensureCursorVisible()
 
@@ -144,24 +138,62 @@ class ChatWidget(QWidget):
         self.chat_display.setTextCursor(cursor)
         self.chat_display.ensureCursorVisible()
 
-    def display_analysis(self, content):
-        self.append_message("System", "Analyzing file content")
-        self.process_message(f"Analyze this code:\n\n```\n{content}\n```")
+    def handle_file_operation(self, operation, filename, content):
+        self.file_operation_occurred.emit(operation, filename, content)
 
-    def handle_media_upload(self, file_path):
-        file_name = os.path.basename(file_path)
-        file_extension = os.path.splitext(file_name)[1].lower()
 
-        if file_extension in ['.png', '.jpg', '.jpeg', '.gif', '.bmp']:
-            self.display_image(file_path)
-        elif file_extension in ['.mp3', '.wav']:
-            self.append_message("System", f"Audio file uploaded: {file_name}")
-        elif file_extension in ['.mp4', '.avi', '.mov']:
-            self.append_message("System", f"Video file uploaded: {file_name}")
-        else:
-            self.append_message("System", f"Unsupported file type: {file_name}")
+    def process_message(self, message):
+        try:
 
-        self.process_message(f"Analyze this media file: {file_path}")
+
+
+            if self.file_list_widget:
+                for file_name, file_path in self.file_list_widget.get_uploaded_files().items():
+                    if file_name in message:
+                        message = message.replace(file_name, file_path)
+
+
+            self.interpreter_thread = InterpreterThread(self.interpreter, message)
+            self.interpreter_thread.output_received.connect(self.handle_interpreter_output)
+            self.interpreter_thread.start()
+
+            logger.info(f"Processing message: {message}")
+        except Exception as e:
+            logger.error(f"Error processing message: {str(e)}")
+
+            self.append_message("System", "An error occurred while processing your message.")
+
+
+
+
+
+    def handle_file_upload(self, file_path, file_name):
+        try:
+
+
+            message = f"File uploaded: {file_name}"
+            self.append_message("System", message)
+            self.interpreter.messages.append({
+                "role": "user",
+                "type": "message",
+                "content": f"A file named '{file_name}' has been uploaded. You can refer to it in your responses."
+            })
+            self.process_message(f"Analyze this file: {file_name}")
+
+            logger.info(f"File uploaded: {file_name}")
+        except Exception as e:
+            logger.error(f"Error handling file upload: {str(e)}")
+
+
+            self.append_message("System", "An error occurred while uploading the file.")
+
+    def clear_chat(self):
+
+        self.chat_display.clear()
+        self.interpreter.messages = []
+
+        if self.file_list_widget:
+            self.file_list_widget.clear_list()
 
     def display_image(self, file_path):
         image = QImage(file_path)
@@ -171,8 +203,10 @@ class ChatWidget(QWidget):
             self.chat_display.textCursor().insertImage(scaled_pixmap.toImage())
             self.chat_display.append("")  # Add a new line after the image
         else:
-            self.append_message("System", f"Failed to load image: {file_path}")
 
-    def clear_chat(self):
-        self.chat_display.clear()
-        self.interpreter.messages = []
+
+
+
+
+
+            self.append_message("System", f"Failed to load image: {file_path}")
