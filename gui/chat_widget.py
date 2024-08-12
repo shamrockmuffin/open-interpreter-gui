@@ -1,7 +1,8 @@
+import os
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QLineEdit, QPushButton, QHBoxLayout
 from PyQt6.QtCore import pyqtSignal, Qt, QThread
 from PyQt6.QtGui import QTextCursor, QColor, QTextCharFormat, QImage, QPixmap
-import os
+
 
 class InterpreterThread(QThread):
     output_received = pyqtSignal(dict)

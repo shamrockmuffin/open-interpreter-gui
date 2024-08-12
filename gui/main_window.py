@@ -93,8 +93,8 @@ class MainWindow(QMainWindow):
             file.write(chat_history)
 
     def open_settings(self):
-        settings_dialog = SettingsDialog(self.interpreter)
-        settings_dialog.exec()
+        gui.settings_dialog = SettingsDialog(self.interpreter)
+        gui.settings_dialog.exec()
 
     def create_status_bar(self):
         self.statusBar().showMessage("Ready")
