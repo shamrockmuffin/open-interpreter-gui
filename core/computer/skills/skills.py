@@ -6,7 +6,7 @@ from pathlib import Path
 
 from ..utils.recipient_utils import format_to_recipient
 from ...utils.lazy_import import lazy_import
-from ....terminal_interface.utils.oi_dir import oi_dir
+from terminal_interface.utils.oi_dir import oi_dir
 
 # Lazy import of aifs, imported when needed to speed up start time
 aifs = lazy_import("aifs")
