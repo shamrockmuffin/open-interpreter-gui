@@ -14,11 +14,7 @@ from .llm.llm import Llm
 from .respond import respond
 from .utils.telemetry import send_telemetry
 from .utils.truncate_output import truncate_output
-from ..terminal_interface.local_setup import local_setup
-from ..terminal_interface.terminal_interface import terminal_interface
-from ..terminal_interface.utils.display_markdown_message import display_markdown_message
-from ..terminal_interface.utils.local_storage_path import get_storage_path
-from ..terminal_interface.utils.oi_dir import oi_dir
+from .utils.local_storage_path import get_storage_path
 from PyQt6.QtCore import QObject, pyqtSignal
 import requests
 import builtins
@@ -162,9 +158,9 @@ class OpenInterpreter:
 
     def local_setup(self):
         """
-        Opens a wizard that lets terminal users pick a local model.
+        This method is not applicable for the GUI version.
         """
-        self = local_setup(self)
+        pass
 
     def wait(self):
         while self.responding:
@@ -596,10 +592,10 @@ class OpenInterpreter:
         self.messages = []
         self.last_messages_count = 0
 
-    def display_message(self, markdown):
-        # This is just handy for start_script in profiles.
-        display_markdown_message(markdown)
+    def display_message(self, message):
+        # This method can be implemented differently for GUI if needed
+        pass
 
     def get_oi_dir(self):
-        # Again, just handy for start_script in profiles.
-        return oi_dir
+        # This method can be implemented differently for GUI if needed
+        return None
