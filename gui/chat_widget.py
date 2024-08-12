@@ -95,14 +95,17 @@ class ChatWidget(QWidget):
         Args:
             message (str): The text of the message sent by the user.
         """
-                # Check if the message contains a file name
+        print(f"Processing message: {message}")  # Debug print
+        # Check if the message contains a file name
         for file_name, file_path in self.uploaded_files.items():
             if file_name in message:
                 message = message.replace(file_name, file_path)
-
+        
+        print(f"Modified message: {message}")  # Debug print
         self.interpreter_thread = InterpreterThread(self.interpreter, message)
         self.interpreter_thread.output_received.connect(self.handle_interpreter_output)
         self.interpreter_thread.start()
+        print("InterpreterThread started")  # Debug print
 
 
 

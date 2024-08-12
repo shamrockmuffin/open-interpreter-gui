@@ -207,19 +207,29 @@ class OpenInterpreter:
             raise
 
     def run_code(self, language, code):
+        print(f"Running code: Language: {language}, Code: {code}")  # Debug print
         # Change working directory to workspace
         original_cwd = os.getcwd()
-        os.chdir(self.workspace_path)
+        workspace_path = getattr(self, 'workspace_path', None)
+        if workspace_path:
+            os.chdir(workspace_path)
+        else:
+            print("Warning: workspace_path not set")  # Debug print
 
         try:
             # Run the code
+            print("Executing code in locals")  # Debug print
             exec(code, self.locals)
+            print("Running code through computer")  # Debug print
             result = self.computer.run(language, code)
+            print(f"Code execution result: {result}")  # Debug print
+            return result
+        except Exception as e:
+            print(f"Error running code: {str(e)}")  # Debug print
+            raise
         finally:
             # Change back to original working directory
             os.chdir(original_cwd)
-
-            return result
 
     def chat_stream(self, message=None):
         """

@@ -22,11 +22,14 @@ class InterpreterThread(QThread):
     def run(self):
         self.processing_started.emit()
         try:
+            print(f"InterpreterThread: Starting chat with message: {self.message}")  # Debug print
             for response in self.interpreter.chat(self.message, display=True, stream=True):
+                print(f"InterpreterThread: Received response: {response}")  # Debug print
                 self.output_received.emit(response)
-        
-        
+        except Exception as e:
+            print(f"InterpreterThread: Error occurred: {str(e)}")  # Debug print
         finally:
+            print("InterpreterThread: Processing finished")  # Debug print
             self.processing_finished.emit()
 
     def stop(self):
