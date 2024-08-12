@@ -9,9 +9,9 @@ class UIManager(QWidget):
         self.setup_progress_bar()
 
     def setup_ui(self):
-        self.api_key_label = QLabel("API Key: Not Set")
-        self.layout().addWidget(self.api_key_label)
         layout = QVBoxLayout()
+        self.api_key_label = QLabel("API Key: Not Set")
+        layout.addWidget(self.api_key_label)
         self.chat_display = QTextEdit()
         self.chat_display.setReadOnly(True)
         self.chat_display.setVerticalScrollBar(QScrollBar())
