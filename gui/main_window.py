@@ -189,14 +189,16 @@ class MainWindow(QMainWindow):
         edit_menu.addAction(settings_action)
 
     def closeEvent(self, event):
-        self.save_chat_history()
+        if self.chat_stack:
+            self.save_chat_history()
         event.accept()
 
     def save_chat_history(self):
-        current_chat = self.chat_stack.currentWidget()
-        chat_history = current_chat.chat_display.toPlainText()
-        if not chat_history.strip():
-            return
+        if self.chat_stack:
+            current_chat = self.chat_stack.currentWidget()
+            chat_history = current_chat.chat_display.toPlainText()
+            if not chat_history.strip():
+                return
 
         if not os.path.exists("GUI_chat_history"):
             os.makedirs("GUI_chat_history")
