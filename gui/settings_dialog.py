@@ -11,6 +11,10 @@ class SettingsDialog(QDialog):
         layout = QVBoxLayout()
 
         # Model selector
+        self.model_selector = QComboBox()
+        self.model_selector.addItems(self.config_manager.load_config()['available_models'])
+        layout.addWidget(QLabel("Model:"))
+        layout.addWidget(self.model_selector)
         layout.addWidget(QLabel("Available Language Models:"))
         self.model_checkboxes = {}
         for model in ["gpt-4-turbo", "gpt-3.5-turbo", "claude-2", "palm-2"]:
@@ -43,6 +47,8 @@ class SettingsDialog(QDialog):
         self.load_current_settings()
 
     def load_current_settings(self):
+        config = self.config_manager.load_config()
+        self.model_selector.setCurrentText(config.get('model', 'gpt-4-turbo'))
         config = self.config_manager.load_config()
         self.model_selector.setCurrentText(config.get('model', 'gpt-4-turbo'))
         self.context_window.setText(str(config.get('context_window', 25000)))
