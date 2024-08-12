@@ -23,12 +23,16 @@ class MainWindow(QMainWindow):
 
         self.chat_widgets = []
         self.file_list_widget = None
-        self.file_display = None
+        self.file_display = FileDisplayWidget()
+        self.layout().addWidget(self.file_display)
         self.script_display = None
         self.config_manager = ConfigManager()
         self.message_handler = MessageHandler(self.interpreter)
 
+        self.ui_manager = UIManager()
+        self.chat_widget = ChatWidget(self.interpreter, self.message_handler, self.file_upload_handler, self.ui_manager)
         self.init_ui()
+        self.connect_components()
         self.create_menu_bar()
         self.create_status_bar()
         self.connect_components()

@@ -27,6 +27,7 @@ class ChatWidget(QWidget):
         self.file_list_widget = None
         self.main_window = None
         self.setup_ui()
+        self.file_display_widget = None
         self.setup_connections()
         self.interpreter_thread = None
 
@@ -68,7 +69,11 @@ class ChatWidget(QWidget):
     def set_file_list_widget(self, file_list_widget):
         self.file_list_widget = file_list_widget
 
+    def set_file_display_widget(self, file_display_widget):
+        self.file_display_widget = file_display_widget
+
     def set_main_window(self, main_window):
+        self.main_window = main_window
         self.main_window = main_window
 
     def send_message(self):
@@ -239,6 +244,17 @@ class ChatWidget(QWidget):
             self.file_list_widget.clear_list()
 
     def display_image(self, file_path):
+        if self.file_display_widget:
+            self.file_display_widget.display_image(file_path)
+        else:
+            image = QImage(file_path)
+            if not image.isNull():
+                pixmap = QPixmap.fromImage(image)
+                scaled_pixmap = pixmap.scaled(300, 300, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                self.chat_display.textCursor().insertImage(scaled_pixmap.toImage())
+                self.chat_display.append("")  # Add a new line after the image
+            else:
+                self.append_message("System", f"Failed to load image: {file_path}")
         image = QImage(file_path)
         if not image.isNull():
             pixmap = QPixmap.fromImage(image)

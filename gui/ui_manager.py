@@ -8,6 +8,7 @@ class UIManager(QWidget):
         super().__init__()
         self.activate_conda_base()
         self.setup_ui()
+        self.chat_widget = None
         self.setup_progress_bar()
 
     def activate_conda_base(self):
@@ -32,7 +33,8 @@ class UIManager(QWidget):
         input_layout.addWidget(self.send_button)
 
         layout.addLayout(input_layout)
-        self.setLayout(layout)
+        self.setCentralWidget(self.ui_manager)
+        self.ui_manager.layout().addWidget(self.chat_widget)
 
     def setup_progress_bar(self):
         self.progress_bar = QProgressBar(self)
@@ -41,7 +43,12 @@ class UIManager(QWidget):
         self.progress_bar.setVisible(False)
         self.layout().addWidget(self.progress_bar)
 
+    def set_chat_widget(self, chat_widget):
+        self.chat_widget = chat_widget
+
     def append_message(self, sender, content):
+        if self.chat_widget:
+            self.chat_widget.append_message(sender, content)
         format = QTextCharFormat()
         if sender == "User":
             format.setForeground(QColor("blue"))
