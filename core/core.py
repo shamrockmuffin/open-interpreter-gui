@@ -322,6 +322,14 @@ class OpenInterpreter:
             self.responding = False
             raise
 
+    def _streaming_chat(self, message=None, display=True):
+        if message:
+            self._handle_message(message)
+
+        for chunk in self._respond_and_store():
+            if display:
+                yield chunk
+
     def get_conversation_history(self):
         """
         Returns the current conversation history.
