@@ -91,6 +91,8 @@ class MainWindow(QMainWindow):
 
         with open(file_path, "w", encoding="utf-8") as file:
             file.write(chat_history)
+
+    def open_settings(self):
         settings_dialog = SettingsDialog(self.interpreter)
         settings_dialog.exec()
 

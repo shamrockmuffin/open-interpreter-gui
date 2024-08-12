@@ -141,6 +141,6 @@ class ChatWidget(QWidget):
         self.chat_display.setTextCursor(cursor)
         self.chat_display.ensureCursorVisible()
 
-    def display_analysis(self, content_info):
-        self.append_message("System", f"Analyzing file: {content_info.get('file_path', 'Unsaved File')}")
-        self.process_message(f"Analyze this {content_info['language']} file:\n\n```{content_info['language']}\n{content_info['content']}\n```")
+    def display_analysis(self, content):
+        self.append_message("System", "Analyzing file content")
+        self.process_message(f"Analyze this code:\n\n```\n{content}\n```")

@@ -145,4 +145,4 @@ class CodeEditor(QWidget):
 
     def analyze_content(self):
         content_info = self.get_current_content()
-        self.analysis_complete.emit(content_info)
+        self.analysis_complete.emit(content_info['content'])
