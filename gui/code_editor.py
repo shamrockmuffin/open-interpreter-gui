@@ -43,6 +43,10 @@ class CodeEditor(QWidget):
         self.analyze_button.clicked.connect(self.analyze_content)
         controls_layout.addWidget(self.analyze_button)
 
+        self.upload_media_button = QPushButton("Upload Media")
+        self.upload_media_button.clicked.connect(self.upload_media)
+        controls_layout.addWidget(self.upload_media_button)
+
         layout.addLayout(controls_layout)
 
         # Code editor
@@ -146,3 +150,8 @@ class CodeEditor(QWidget):
     def analyze_content(self):
         content_info = self.get_current_content()
         self.analysis_complete.emit(content_info['content'])
+
+    def upload_media(self):
+        file_path, _ = QFileDialog.getOpenFileName(self, "Upload Media File", "", "Media Files (*.png *.jpg *.jpeg *.gif *.bmp *.mp3 *.wav *.mp4 *.avi *.mov)")
+        if file_path:
+            self.chat_widget.handle_media_upload(file_path)

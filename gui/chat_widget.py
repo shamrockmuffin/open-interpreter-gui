@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QLineEdit, QPushButton, QHBoxLayout
 from PyQt6.QtCore import pyqtSignal, Qt, QThread
-from PyQt6.QtGui import QTextCursor, QColor, QTextCharFormat
+from PyQt6.QtGui import QTextCursor, QColor, QTextCharFormat, QImage, QPixmap
+import os
 
 class InterpreterThread(QThread):
     output_received = pyqtSignal(dict)
@@ -144,3 +145,28 @@ class ChatWidget(QWidget):
     def display_analysis(self, content):
         self.append_message("System", "Analyzing file content")
         self.process_message(f"Analyze this code:\n\n```\n{content}\n```")
+
+    def handle_media_upload(self, file_path):
+        file_name = os.path.basename(file_path)
+        file_extension = os.path.splitext(file_name)[1].lower()
+
+        if file_extension in ['.png', '.jpg', '.jpeg', '.gif', '.bmp']:
+            self.display_image(file_path)
+        elif file_extension in ['.mp3', '.wav']:
+            self.append_message("System", f"Audio file uploaded: {file_name}")
+        elif file_extension in ['.mp4', '.avi', '.mov']:
+            self.append_message("System", f"Video file uploaded: {file_name}")
+        else:
+            self.append_message("System", f"Unsupported file type: {file_name}")
+
+        self.process_message(f"Analyze this media file: {file_path}")
+
+    def display_image(self, file_path):
+        image = QImage(file_path)
+        if not image.isNull():
+            pixmap = QPixmap.fromImage(image)
+            scaled_pixmap = pixmap.scaled(300, 300, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            self.chat_display.textCursor().insertImage(scaled_pixmap.toImage())
+            self.chat_display.append("")  # Add a new line after the image
+        else:
+            self.append_message("System", f"Failed to load image: {file_path}")
