@@ -12,7 +12,12 @@ logging.basicConfig(
     filename='chat_application.log'
 )
 
-interpreter = Interpreter()
+interpreter = OpenInterpreter()
+interpreter.system_message = "You are Open Interpreter, a world-class programmer that can complete any goal by writing and executing code."
+interpreter.auto_run = True
+interpreter.api_base = "https://openrouter.ai/api/v1"
+interpreter.model = "openai/gpt-4-vision-preview"
+interpreter.api_key = "YOUR_OPENROUTER_API_KEY_HERE"
 message_handler = MessageHandler(interpreter)
 file_upload_handler = FileUploadHandler()
 ui_manager = UIManager()
