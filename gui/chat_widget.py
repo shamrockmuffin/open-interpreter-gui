@@ -1,6 +1,6 @@
 import os
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QLineEdit, QPushButton, QHBoxLayout, QScrollBar
-from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtCore import pyqtSignal, Qt, QThread
 from PyQt6.QtGui import QTextCursor, QColor, QTextCharFormat, QImage, QPixmap
 from gui.interpreter_thread import InterpreterThread
 
