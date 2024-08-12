@@ -193,6 +193,7 @@ class OpenInterpreter:
 
     def chat(self, message=None, display=True, stream=False, blocking=True):
         # Existing chat method implementation...
+        pass  # Placeholder for the actual implementation
 
     def create_file(self, file_path, content):
         try:
