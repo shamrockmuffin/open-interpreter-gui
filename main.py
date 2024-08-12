@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import QApplication
 from gui.main_window import MainWindow
 from interpreter import OpenInterpreter
 from gui.message_handler import MessageHandler
+from gui.interpreter_setup import setup_interpreter
 from gui.config_manager import ConfigManager
 from gui.file_upload_handler import FileUploadHandler
 from gui.ui_manager import UIManager
