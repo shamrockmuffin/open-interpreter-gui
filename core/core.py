@@ -375,8 +375,13 @@ class OpenInterpreter:
         # wraps the vanilla .chat(display=False) generator in a display.
         # Quite different from the plain generator stuff. So redirect to that
         if display:
-            yield from terminal_interface(self, message)
+            yield from self._handle_display_mode(message)
             return
+
+    def _handle_display_mode(self, message):
+        # This method should be implemented to handle the display mode
+        # For now, we'll just yield a placeholder message
+        yield {"type": "message", "content": "Display mode not implemented in GUI version"}
 
         # One-off message
         if message or message == "":
