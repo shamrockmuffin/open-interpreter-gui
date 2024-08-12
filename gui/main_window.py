@@ -32,6 +32,11 @@ class MainWindow(QMainWindow):
         self.create_menu_bar()
         self.create_status_bar()
         self.connect_components()
+
+    def connect_components(self):
+        self.file_list_widget.file_uploaded.connect(self.handle_file_upload)
+        self.file_list_widget.file_selected.connect(self.display_file)
+        self.chat_list.currentRowChanged.connect(self.switch_chat)
         self.load_settings()
 
     def init_ui(self):
