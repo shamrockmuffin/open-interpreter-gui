@@ -70,7 +70,7 @@ class ChatWidget(QWidget):
         if message:
             self.input_field.clear()
             self.append_message("User", message)
-            self.message_sent.emit(message)
+            self.process_message(message)
 
     def update_chat(self, response):
         if response['type'] == MessageTypes.MESSAGE:
@@ -80,7 +80,7 @@ class ChatWidget(QWidget):
         elif response['type'] == MessageTypes.CONSOLE:
             self.append_console_output(response['content'])
         
-        self.message_processed.emit(response)
+        self.update_chat(response)
 
 
 

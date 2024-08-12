@@ -10,7 +10,7 @@ class MessageHandler:
 
     def process_message(self, message):
         try:
-            for response in self.interpreter.chat(message, display=False, stream=True):
+            for response in self.interpreter.chat_stream(message):
                 yield response
         except Exception as e:
             logger.error(f"Error processing message: {str(e)}")
