@@ -1,3 +1,4 @@
+import subprocess
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QLineEdit, QPushButton, QHBoxLayout, QScrollBar, QProgressBar, QLabel
 from PyQt6.QtGui import QTextCursor, QColor, QTextCharFormat, QImage, QPixmap
 from PyQt6.QtCore import Qt, QTimer
@@ -5,10 +6,15 @@ from PyQt6.QtCore import Qt, QTimer
 class UIManager(QWidget):
     def __init__(self):
         super().__init__()
+        self.activate_conda_base()
         self.setup_ui()
         self.setup_progress_bar()
 
-    def setup_ui(self):
+    def activate_conda_base(self):
+        try:
+            subprocess.run(["conda", "activate", "base"], check=True, shell=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Failed to activate conda base environment: {e}")
         layout = QVBoxLayout()
         layout = QVBoxLayout()
         self.api_key_label = QLabel("API Key: Not Set")
