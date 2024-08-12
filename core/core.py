@@ -10,15 +10,13 @@ from datetime import datetime
 from queue import Queue
 from .computer.computer import Computer
 from .default_system_message import default_system_message
-from .llm.llm import Llm
 from .respond import respond
 from .utils.telemetry import send_telemetry
 from .utils.truncate_output import truncate_output
-from .utils.local_storage_path import get_storage_path
 from PyQt6.QtCore import QObject, pyqtSignal
 import requests
 import builtins
-from .workspace import WorkspaceManager
+from .workspace import Workspace
 
 class FileOperationTracker(QObject):
     file_operation = pyqtSignal(str, str, str)
@@ -76,7 +74,6 @@ class OpenInterpreter:
             in_terminal_interface=False,
             conversation_history=True,
             conversation_filename=None,
-            conversation_history_path=get_storage_path("conversations"),
             os=False,
             speak_messages=False,
             llm=None,
@@ -126,13 +123,11 @@ class OpenInterpreter:
         # Conversation history
         self.conversation_history = conversation_history
         self.conversation_filename = conversation_filename
-        self.conversation_history_path = conversation_history_path
 
         # OS control mode related attributes
         self.os = os
         self.speak_messages = speak_messages
-        self.workspace_manager = WorkspaceManager(self)
-        self.workspace_path = self.workspace_manager.get_workspace_path()
+
         # Computer
         self.computer = Computer(self) if computer is None else computer
         self.sync_computer = sync_computer
@@ -145,7 +140,7 @@ class OpenInterpreter:
         self.computer.import_skills = import_skills
 
         # LLM
-        self.llm = Llm(self) if llm is None else llm
+        self.llm = llm
 
         # These are LLM related
         self.system_message = system_message
@@ -190,89 +185,10 @@ class OpenInterpreter:
     def chat(self, message=None, display=True, stream=False, blocking=True):
         try:
             self.responding = True
-
-            if not blocking:
-                chat_thread = threading.Thread(
-                    target=self.chat, args=(message, display, stream, True)
-                )  # True as in blocking = True
-                chat_thread.start()
-                return
-
-            if stream:
-                return self._streaming_chat(message=message, display=display)
-
-            # If stream=False, *pull* from the stream.
-            for _ in self._streaming_chat(message=message, display=display):
-                pass
-
-            # Return new messages
-            self.responding = False
-            return self.messages[self.last_messages_count:]
-
-        except Exception:
-            self.responding = False
-            raise
-
-    def create_file(self, file_path, content):
-        try:
-            with open(file_path, 'w') as file:
-                file.write(content)
-            return f"File created successfully: {file_path}"
-        except Exception as e:
-            return f"Error creating file: {str(e)}"
-
-    def modify_file(self, file_path, content):
-        try:
-            with open(file_path, 'w') as file:
-                file.write(content)
-            return f"File modified successfully: {file_path}"
-        except Exception as e:
-            return f"Error modifying file: {str(e)}"
-
-    def delete_file(self, file_path):
-        try:
-            os.remove(file_path)
-            return f"File deleted successfully: {file_path}"
-        except Exception as e:
-            return f"Error deleting file: {str(e)}"
-
-    def read_file(self, file_path):
-        try:
-            with open(file_path, 'r') as file:
-                content = file.read()
-            return content
-        except Exception as e:
-            return f"Error reading file: {str(e)}"
-        # This block seems to be misplaced or unnecessary. 
-        # If it's needed, it should be part of a method. 
-        # For now, we'll comment it out to avoid undefined variable errors.
-        """
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "HTTP-Referer": self.site_url,
-            "X-Title": self.site_name,
-            "Content-Type": "application/json"
-        }
-        data = {
-            "model": self.llm.model,
-            "messages": [{"role": "user", "content": message}]
-        }
-        response = requests.post(self.api_base, headers=headers, json=data)
-        response_data = response.json()
-        return response_data
-        """
-        try:
-            self.responding = True
-            if self.anonymous_telemetry and message is not None:
-                message_type = type(message).__name__  # Only send message type, no content
-                self.send_telemetry(
-                    "started_chat",
-                    properties={
-                        "in_terminal_interface": self.in_terminal_interface,
-                        "message_type": message_type,
-                        "os_mode": self.os,
-                    },
-                )
+            if message:
+                self._handle_message(message, display)
+            else:
+                self._handle_message(self._get_message(), display)
 
             if not blocking:
                 chat_thread = threading.Thread(
@@ -295,20 +211,7 @@ class OpenInterpreter:
         except GeneratorExit:
             self.responding = False
             # It's fine
-        except Exception as e:
-            self.responding = False
-            if self.anonymous_telemetry and message is not None:
-                message_type = type(message).__name__
-                self.send_telemetry(
-                    "errored",
-                    properties={
-                        "error": str(e),
-                        "in_terminal_interface": self.in_terminal_interface,
-                        "message_type": message_type,
-                        "os_mode": self.os,
-                    },
-                )
-
+       
             raise
 
     def run_code(self, language, code):
@@ -369,7 +272,7 @@ class OpenInterpreter:
 
         threading.Thread(target=chat_thread).start()
 
-    def _streaming_chat(self, message=None, display=True):
+    def streaming_chat(self, message=None, display=True):
         # Sometimes a little more code -> a much better experience!
         # Display mode actually runs interpreter.chat(display=False, stream=True) from within the terminal_interface.
         # wraps the vanilla .chat(display=False) generator in a display.
@@ -378,7 +281,7 @@ class OpenInterpreter:
             yield from self._handle_display_mode(message)
             return
 
-    def _handle_display_mode(self, message):
+    def handle_display_mode(self, message):
         # This method should be implemented to handle the display mode
         # For now, we'll just yield a placeholder message
         yield {"type": "message", "content": "Display mode not implemented in GUI version"}
