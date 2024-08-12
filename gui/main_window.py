@@ -1,13 +1,13 @@
 import os
 from datetime import datetime
-from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QMenuBar, QStatusBar, QSplitter
+from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QHBoxLayout, QWidget, QSplitter
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtCore import Qt
-from .chat_widget import ChatWidget
-from .file_list_widget import FileListWidget
-from .settings_dialog import SettingsDialog
-from .file_display_widget import FileDisplayWidget
-from .script_display_widget import ScriptDisplayWidget
+from gui.chat_widget import ChatWidget
+from gui.file_list_widget import FileListWidget
+from gui.settings_dialog import SettingsDialog
+from gui.file_display_widget import FileDisplayWidget
+from gui.script_display_widget import ScriptDisplayWidget
 
 class MainWindow(QMainWindow):
     def __init__(self, interpreter, config_manager):

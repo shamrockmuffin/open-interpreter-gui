@@ -1,5 +1,5 @@
 from gui.config_manager import ConfigManager
-from interpreter import OpenInterpreter
+from core.core import OpenInterpreter
 
 def setup_interpreter():
     config_manager = ConfigManager()
