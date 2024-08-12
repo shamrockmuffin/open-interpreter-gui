@@ -139,7 +139,8 @@ class OpenInterpreter:
         self.computer.import_skills = import_skills
 
         # LLM
-        self.llm = llm
+        from .llm.llm import LLM
+        self.llm = LLM() if llm is None else llm
 
         # These are LLM related
         self.system_message = system_message
