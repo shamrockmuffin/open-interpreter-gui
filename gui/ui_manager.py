@@ -10,6 +10,7 @@ class UIManager(QWidget):
 
     def setup_ui(self):
         layout = QVBoxLayout()
+        layout = QVBoxLayout()
         self.api_key_label = QLabel("API Key: Not Set")
         layout.addWidget(self.api_key_label)
         self.chat_display = QTextEdit()

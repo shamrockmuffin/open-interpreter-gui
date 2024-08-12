@@ -193,7 +193,8 @@ class MainWindow(QMainWindow):
         event.accept()
 
     def save_chat_history(self):
-        chat_history = self.chat_widget.chat_display.toPlainText()
+        current_chat = self.chat_stack.currentWidget()
+        chat_history = current_chat.chat_display.toPlainText()
         if not chat_history.strip():
             return
 
