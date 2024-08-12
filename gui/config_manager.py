@@ -5,8 +5,8 @@ class ConfigManager:
     def __init__(self, config_file='config.json'):
         self.config_file = config_file
         self.default_config = {
-            'available_models': ['gpt-4-turbo', 'gpt-3.5-turbo', 'claude-2', 'palm-2'],
-            'default_model': 'gpt-4-turbo',
+            'available_models': ['gpt-4o', 'gpt-3.5-turbo', 'gemini-1.5-flash', 'palm-2'],
+            'default_model': 'gpt-4o',
             'context_window': 25000,
             'temperature': 0.7
         }
