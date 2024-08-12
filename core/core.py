@@ -21,6 +21,7 @@ from ..terminal_interface.utils.local_storage_path import get_storage_path
 from ..terminal_interface.utils.oi_dir import oi_dir
 from PyQt6.QtCore import QObject, pyqtSignal
 import builtins
+from .workspace import WorkspaceManager
 
 class FileOperationTracker(QObject):
     file_operation = pyqtSignal(str, str, str)
@@ -130,7 +131,6 @@ class OpenInterpreter:
         # OS control mode related attributes
         self.os = os
         self.speak_messages = speak_messages
-        self.workspace_path = self.workspace_manager.get_workspace_path()
         self.workspace_manager = WorkspaceManager(self)
         self.workspace_path = self.workspace_manager.get_workspace_path()
         # Computer
