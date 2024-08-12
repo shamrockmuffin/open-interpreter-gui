@@ -216,6 +216,7 @@ class MainWindow(QMainWindow):
         self.interpreter.llm.model = config.get('model', 'gpt-4o')
         self.interpreter.llm.context_length = config.get('context_window', 25000)
         self.interpreter.llm.temperature = config.get('temperature', 0.7)
+        self.interpreter.api_base = config.get('api_base', 'https://openrouter.ai/api/v1')
 
     def load_settings(self):
         self.apply_settings()

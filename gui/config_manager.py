@@ -8,7 +8,8 @@ class ConfigManager:
             'available_models': ['gpt-4o', 'gpt-3.5-turbo', 'gemini-1.5-flash', 'palm-2'],
             'default_model': 'gpt-4o',
             'context_window': 25000,
-            'temperature': 0.7
+            'temperature': 0.7,
+            'api_base': 'https://openrouter.ai/api/v1'
         }
 
     def save_config(self, config):

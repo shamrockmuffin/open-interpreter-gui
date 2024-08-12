@@ -32,7 +32,15 @@ class SettingsDialog(QDialog):
         self.temperature = QLineEdit()
         layout.addWidget(self.temperature)
 
-        # Save button
+        # API Base selector
+        layout.addWidget(QLabel("API Base:"))
+        self.api_base_selector = QComboBox()
+        self.api_base_selector.addItems([
+            "https://openrouter.ai/api/v1",
+            "https://api.openai.com/v1",
+            "https://api.anotherprovider.com/v1"
+        ])
+        layout.addWidget(self.api_base_selector)
         save_button = QPushButton("Save")
         save_button.clicked.connect(self.save_settings)
         layout.addWidget(save_button)
@@ -45,6 +53,7 @@ class SettingsDialog(QDialog):
         self.model_selector.setCurrentText(config.get('model', 'gpt-4o'))
         config = self.config_manager.load_config()
         self.model_selector.setCurrentText(config.get('model', 'gpt-4o'))
+        self.api_base_selector.setCurrentText(config.get('api_base', 'https://openrouter.ai/api/v1'))
         self.context_window.setText(str(config.get('context_window', 25000)))
         self.temperature.setText(str(config.get('temperature', 0.7)))
 
@@ -52,7 +61,8 @@ class SettingsDialog(QDialog):
         config = {
             'model': self.model_selector.currentText(),
             'context_window': int(self.context_window.text()),
-            'temperature': float(self.temperature.text())
+            'temperature': float(self.temperature.text()),
+            'api_base': self.api_base_selector.currentText()
         }
         self.config_manager.save_config(config)
         self.accept()
