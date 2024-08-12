@@ -31,7 +31,6 @@ class FileOperationTracker(QObject):
         result = f.write(data)
         self.file_operation.emit('write', f.name, data)
         return result
-import os
 
 class OpenInterpreter:
     """
@@ -151,36 +150,27 @@ class OpenInterpreter:
         self.empty_code_output_template = empty_code_output_template
         self.code_output_sender = code_output_sender
 
-    def local_setup(self):
-        """
-        This method is not applicable for the GUI version.
-        """
-        pass
+    def setup_file_tracking(self):
+        self.locals = {
+            'open': self.file_tracker.open,
+            'write': self.file_tracker.write
+        }
+
+    @property
+    def anonymous_telemetry(self) -> bool:
+        return not self.disable_telemetry and not self.offline
+
+    @property
+    def will_contribute(self):
+        overrides = (
+            self.offline or not self.conversation_history or self.disable_telemetry
+        )
+        return self.contribute_conversation and not overrides
 
     def wait(self):
         while self.responding:
             time.sleep(0.2)
-        # Return new messages
         return self.messages[self.last_messages_count:]
-    def setup_file_tracking(self):
-        def custom_open(*args, **kwargs):
-            return self.file_tracker.open(*args, **kwargs)
-    @property
-    def anonymous_telemetry(self) -> bool:
-        return not self.disable_telemetry and not self.offline
-    def custom_write(self, f, data):
-        return self.file_tracker.write(f, data)
-
-    def setup_file_tracking(self):
-        self.locals = {}
-        self.locals['open'] = self.file_tracker.open
-        self.locals['write'] = self.custom_write
-    @property
-    def will_contribute(self):
-        overrides = (
-                self.offline or not self.conversation_history or self.disable_telemetry
-        )
-        return self.contribute_conversation and not overrides
 
     def chat(self, message=None, display=True, stream=False, blocking=True):
         try:
@@ -272,93 +262,65 @@ class OpenInterpreter:
 
         threading.Thread(target=chat_thread).start()
 
-    def streaming_chat(self, message=None, display=True):
-        # Sometimes a little more code -> a much better experience!
-        # Display mode actually runs interpreter.chat(display=False, stream=True) from within the terminal_interface.
-        # wraps the vanilla .chat(display=False) generator in a display.
-        # Quite different from the plain generator stuff. So redirect to that
-        if display:
-            yield from self._handle_display_mode(message)
-            return
+    def _handle_message(self, message):
+        if not message:
+            message = "No entry from user - please suggest something to enter."
 
-    def handle_display_mode(self, message):
-        # This method should be implemented to handle the display mode
-        # For now, we'll just yield a placeholder message
-        yield {"type": "message", "content": "Display mode not implemented in GUI version"}
+        if isinstance(message, dict):
+            if "role" not in message:
+                message["role"] = "user"
+            self.messages.append(message)
+        elif isinstance(message, str):
+            self.messages.append({"role": "user", "type": "message", "content": message})
+        elif isinstance(message, list):
+            self.messages = message
 
-        # One-off message
-        if message or message == "":
-            if message == "":
-                message = "No entry from user - please suggest something to enter."
+        self.last_messages_count = len(self.messages)
+        return message
 
-            ## We support multiple formats for the incoming message:
-            # Dict (these are passed directly in)
-            if isinstance(message, dict):
-                if "role" not in message:
-                    message["role"] = "user"
-                self.messages.append(message)
-            # String (we construct a user message dict)
-            elif isinstance(message, str):
-                self.messages.append(
-                    {"role": "user", "type": "message", "content": message}
-                )
-            # List (this is like the OpenAI API)
-            elif isinstance(message, list):
-                self.messages = message
+    def _save_conversation(self):
+        if self.conversation_history and not self.conversation_filename:
+            first_few_words = self._get_first_few_words()
+            date = datetime.now().strftime("%B_%d_%Y_%H-%M-%S")
+            self.conversation_filename = f"{first_few_words}__{date}.json"
 
-            # Now that the user's messages have been added, we set last_messages_count.
-            # This way we will only return the messages after what they added.
-            self.last_messages_count = len(self.messages)
+        if self.conversation_history:
+            if not os.path.exists(self.conversation_history_path):
+                os.makedirs(self.conversation_history_path)
+            with open(os.path.join(self.conversation_history_path, self.conversation_filename), "w") as f:
+                json.dump(self.messages, f)
 
-            # DISABLED because I think we should just not transmit images to non-multimodal models?
-            # REENABLE this when multimodal becomes more common:
+    def _get_first_few_words(self):
+        content = self.messages[0]["content"][:25]
+        words = content.split()
+        if len(words) >= 2:
+            first_few_words = "_".join(words[:-1])
+        else:
+            first_few_words = content[:15]
+        return "".join(c for c in first_few_words if c not in '<>:"/\\|?*!')
 
-            # Make sure we're using a model that can handle this
-            # if not self.llm.supports_vision:
-            #     for message in self.messages:
-            #         if message["type"] == "image":
-            #             raise Exception(
-            #                 "Use a multimodal model and set `interpreter.llm.supports_vision` to True to handle image messages."
-            #             )
+    def chat(self, message=None, display=True, stream=False, blocking=True):
+        try:
+            self.responding = True
+            message = self._handle_message(message)
 
-            # This is where it all happens!
-            yield from self._respond_and_store()
+            if not blocking:
+                threading.Thread(target=self.chat, args=(message, display, stream, True)).start()
+                return
 
-            # Save conversation if we've turned conversation_history on
-            if self.conversation_history:
-                # If it's the first message, set the conversation name
-                if not self.conversation_filename:
-                    first_few_words_list = self.messages[0]["content"][:25].split(" ")
-                    if (
-                            len(first_few_words_list) >= 2
-                    ):  # for languages like English with blank between words
-                        first_few_words = "_".join(first_few_words_list[:-1])
-                    else:  # for languages like Chinese without blank between words
-                        first_few_words = self.messages[0]["content"][:15]
-                    for char in '<>:"/\\|?*!':  # Invalid characters for filenames
-                        first_few_words = first_few_words.replace(char, "")
+            if stream:
+                return self._streaming_chat(message=message, display=display)
 
-                    date = datetime.now().strftime("%B_%d_%Y_%H-%M-%S")
-                    self.conversation_filename = (
-                            "__".join([first_few_words, date]) + ".json"
-                    )
+            for _ in self._streaming_chat(message=message, display=display):
+                pass
 
-                # Check if the directory exists, if not, create it
-                if not os.path.exists(self.conversation_history_path):
-                    os.makedirs(self.conversation_history_path)
-                # Write or overwrite the file
-                with open(
-                        os.path.join(
-                            self.conversation_history_path, self.conversation_filename
-                        ),
-                        "w",
-                ) as f:
-                    json.dump(self.messages, f)
-            return
+            self._save_conversation()
+            self.responding = False
+            return self.messages[self.last_messages_count:]
 
-        raise Exception(
-            "`interpreter.chat()` requires a display. Set `display=True` or pass a message into `interpreter.chat(message)`."
-        )
+        except GeneratorExit:
+            self.responding = False
+            raise
 
     def get_conversation_history(self):
         """
@@ -484,10 +446,3 @@ class OpenInterpreter:
         self.messages = []
         self.last_messages_count = 0
 
-    def display_message(self, message):
-        # This method can be implemented differently for GUI if needed
-        pass
-
-    def get_oi_dir(self):
-        # This method can be implemented differently for GUI if needed
-        return None
