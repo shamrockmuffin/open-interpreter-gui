@@ -75,7 +75,7 @@ class MainWindow(QMainWindow):
         file_extension = file_path.split('.')[-1].lower()
         try:
             if file_extension in ['jpg', 'jpeg', 'png', 'gif']:
-                self.file_display.display_image(file_path)
+                self.chat_widget.display_image(file_path)
             elif file_extension in ['mp3', 'wav']:
                 self.file_display.display_audio(file_path)
             elif file_extension in ['mp4', 'avi', 'mov']:

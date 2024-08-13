@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QLineEdit, QPushBut
 from PyQt6.QtCore import pyqtSignal, Qt, QThread
 from PyQt6.QtGui import QTextCursor, QColor, QTextCharFormat, QImage, QPixmap
 from gui.interpreter_thread import InterpreterThread
+from gui.image_display_window import ImageDisplayWindow
 
 class InterpreterThread(QThread):
     output_received = pyqtSignal(dict)
@@ -246,21 +247,17 @@ class ChatWidget(QWidget):
 
     def display_image(self, file_path):
         """
-        Displays an image in the chat display.
+        Displays an image in a separate window.
         
         Args:
             file_path (str): The file path of the image to be displayed.
         
-        This method loads the image from the given file path, scales it to a maximum size of 300x300 pixels while maintaining the aspect ratio, and inserts the scaled image into the chat display. If the image fails to load, a message is appended to the chat display indicating the failure.
+        This method creates a new ImageDisplayWindow to show the image in a separate window.
+        It also adds a message to the chat display indicating that an image has been opened.
         """
-        image = QImage(file_path)
-        if not image.isNull():
-            pixmap = QPixmap.fromImage(image)
-            scaled_pixmap = pixmap.scaled(300, 300, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-            self.chat_display.textCursor().insertImage(scaled_pixmap.toImage())
-            self.chat_display.append("")  # Add a new line after the image
-        else:
-            self.append_message("System", f"Failed to load image: {file_path}")
+        image_window = ImageDisplayWindow(file_path, self)
+        image_window.show()
+        self.append_message("System", f"Opened image: {file_path}")
 
     def clear_chat(self):
         """
